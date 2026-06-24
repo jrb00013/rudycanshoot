@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "screenshot-mcp": {
+      "command": "node",
+      "args": ["bin/screenshot-mcp.js", "serve"]
+    }
+  }
+}

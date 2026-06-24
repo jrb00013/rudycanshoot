@@ -1,0 +1,40 @@
+{
+  "name": "screenshot-mcp",
+  "version": "1.0.0",
+  "description": "Screenshot tool with MCP server — lets AI assistants capture screens, windows, and terminals. Auto-installs into Claude Code, Cursor, Windsurf, Codex, Gemini CLI, OpenCode, and more.",
+  "keywords": [
+    "mcp",
+    "screenshot",
+    "ai",
+    "claude",
+    "cursor",
+    "windsurf",
+    "codex",
+    "gemini",
+    "model-context-protocol"
+  ],
+  "homepage": "https://github.com/joeblack-lha/screenshot-mcp",
+  "license": "MIT",
+  "author": "Joseph Black <joseph.black@lighthouseavionics.com>",
+  "type": "module",
+  "bin": {
+    "screenshot-mcp": "./bin/screenshot-mcp.js"
+  },
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./server": "./src/server.js"
+  },
+  "scripts": {
+    "start": "node bin/screenshot-mcp.js serve",
+    "install-tools": "node bin/screenshot-mcp.js install --all",
+    "test": "node --test src/*.test.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "commander": "^12.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

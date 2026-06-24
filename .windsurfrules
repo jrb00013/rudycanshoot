@@ -1,0 +1,12 @@
+# screenshot-mcp rules for Windsurf
+
+This is the screenshot-mcp project. Key facts:
+
+- Entry point: `bin/screenshot-mcp.js` (CLI + MCP server)
+- MCP server command: `node bin/screenshot-mcp.js serve`
+- Platform logic: `src/screenshot.js` — Linux (X11/Wayland), macOS, Windows
+- Tool installers: `src/install.js` — adds MCP config to AI tools
+
+When editing screenshot backends, always try multiple tool binaries in order and
+throw a clear error listing what to install if all fail. Never assume a specific
+tool is present on the user's machine.
