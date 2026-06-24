@@ -84,4 +84,40 @@ program
     });
   });
 
+
+program
+  .command("watch")
+  .description("Periodically capture screenshots")
+  .option("-i, --interval <ms>", "Interval in milliseconds", "5000")
+  .option("-n, --count <n>", "Max captures (0 = unlimited)", "0")
+  .option("-m, --mode <mode>", "fullscreen | window | area", "fullscreen")
+  .option("-d, --dir <dir>", "Output directory")
+  .option("--gif <path>", "Compile all frames into a GIF when done")
+  .action(async (opts) => {
+    const { ScreenshotWatcher } = await import("../src/watch.js");
+    const { makeGif } = await import("../src/gif.js");
+    const limit = Number(opts.count) || Infinity;
+    const frames = [];
+    const watcher = new ScreenshotWatcher({
+      intervalMs: Number(opts.interval),
+      mode: opts.mode,
+      outputDir: opts.dir,
+      limit,
+    })
+      .on("capture", ({ path, count }) => {
+        console.log(`[${count}] ${path}`);
+        frames.push(path);
+      })
+      .on("stopped", async ({ count }) => {
+        console.log(`Stopped after ${count} captures.`);
+        if (opts.gif && frames.length > 0) {
+          const gifPath = await makeGif(frames, opts.gif);
+          console.log("GIF:", gifPath);
+        }
+      })
+      .start();
+    process.on("SIGINT", () => watcher.stop());
+  });
+
 program.parse();
+// watch subcommand
