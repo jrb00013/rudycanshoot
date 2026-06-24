@@ -1,0 +1,9 @@
+{
+  "mcpServers": [
+    {
+      "name": "rudycanshoot",
+      "command": "node",
+      "args": ["bin/rudycanshoot.js", "serve"]
+    }
+  ]
+}
