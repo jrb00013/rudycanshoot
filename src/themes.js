@@ -1,0 +1,73 @@
+export const THEMES = {
+  dark: {
+    bg: [30, 30, 30],
+    bar: [45, 45, 45],
+    bar_text: [200, 200, 200],
+    prompt: [80, 200, 120],
+    text: [220, 220, 220],
+    error: [255, 100, 100],
+    warn: [255, 200, 80],
+    comment: [128, 128, 128],
+    dot_red: [255, 90, 90],
+    dot_yellow: [255, 200, 60],
+    dot_green: [80, 200, 80],
+  },
+  light: {
+    bg: [250, 250, 250],
+    bar: [220, 220, 220],
+    bar_text: [40, 40, 40],
+    prompt: [0, 120, 60],
+    text: [30, 30, 30],
+    error: [180, 0, 0],
+    warn: [160, 100, 0],
+    comment: [100, 100, 100],
+    dot_red: [220, 50, 50],
+    dot_yellow: [200, 160, 0],
+    dot_green: [40, 160, 40],
+  },
+  monokai: {
+    bg: [39, 40, 34],
+    bar: [60, 60, 55],
+    bar_text: [248, 248, 242],
+    prompt: [166, 226, 46],
+    text: [248, 248, 242],
+    error: [249, 38, 114],
+    warn: [230, 219, 116],
+    comment: [117, 113, 94],
+    dot_red: [249, 38, 114],
+    dot_yellow: [230, 219, 116],
+    dot_green: [166, 226, 46],
+  },
+  dracula: {
+    bg: [40, 42, 54],
+    bar: [68, 71, 90],
+    bar_text: [248, 248, 242],
+    prompt: [80, 250, 123],
+    text: [248, 248, 242],
+    error: [255, 85, 85],
+    warn: [241, 250, 140],
+    comment: [98, 114, 164],
+    dot_red: [255, 85, 85],
+    dot_yellow: [241, 250, 140],
+    dot_green: [80, 250, 123],
+  },
+  solarized: {
+    bg: [0, 43, 54],
+    bar: [7, 54, 66],
+    bar_text: [147, 161, 161],
+    prompt: [133, 153, 0],
+    text: [131, 148, 150],
+    error: [220, 50, 47],
+    warn: [181, 137, 0],
+    comment: [88, 110, 117],
+    dot_red: [220, 50, 47],
+    dot_yellow: [181, 137, 0],
+    dot_green: [133, 153, 0],
+  },
+};
+
+export function getTheme(name = "dark") {
+  return THEMES[name] ?? THEMES.dark;
+}
+
+export const THEME_NAMES = Object.keys(THEMES);
