@@ -7,7 +7,7 @@ import { homedir, platform } from "node:os";
 const execFileAsync = promisify(execFile);
 
 export function defaultOutputDir() {
-  const dir = join(homedir(), ".screenshot-mcp", "captures");
+  const dir = join(homedir(), ".rudycanshoot", "captures");
   mkdirSync(dir, { recursive: true });
   return dir;
 }
@@ -56,18 +56,17 @@ async function captureLinux(outputPath, opts = {}) {
   if (which("maim")) {
     const args = [outputPath];
     if (windowMode) {
-      const { stdout } = await execFileAsync("xdotool", ["getactivewindow"]);
-      args.push("-i", stdout.trim());
+      try {
+        const { stdout } = await execFileAsync("xdotool", ["getactivewindow"]);
+        args.push("-i", stdout.trim());
+      } catch {}
     }
     await execFileAsync("maim", args);
     return;
   }
 
   if (which("import")) {
-    const args = windowMode
-      ? ["-window", "root", outputPath]
-      : ["-window", "root", outputPath];
-    await execFileAsync("import", args);
+    await execFileAsync("import", ["-window", "root", outputPath]);
     return;
   }
 
@@ -85,7 +84,8 @@ async function captureLinux(outputPath, opts = {}) {
   }
 
   throw new Error(
-    "No screenshot tool found. Install one of: scrot, maim, grim (Wayland), gnome-screenshot, or ImageMagick."
+    "No screenshot tool found. Install one of: scrot, maim, grim (Wayland), gnome-screenshot, or ImageMagick. " +
+    "For CI/headless, use rudycanshoot capture_command instead."
   );
 }
 
@@ -136,18 +136,4 @@ export async function takeScreenshot(opts = {}) {
   }
 
   return outputPath;
-}
-
-export async function captureTerminal(outputPath, opts = {}) {
-  const { scrollback = 50 } = opts;
-
-  if (which("ttyrec") || which("script")) {
-    throw new Error("Terminal capture requires a running session — use 'screenshot-mcp terminal' from inside your terminal.");
-  }
-
-  if (process.env.TERM_PROGRAM === "iTerm.app") {
-    throw new Error("Use iTerm2's built-in screenshot for terminal capture on macOS.");
-  }
-
-  return takeScreenshot({ outputPath, ...opts });
 }
