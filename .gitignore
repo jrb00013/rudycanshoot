@@ -1,0 +1,12 @@
+node_modules/
+*.log
+.DS_Store
+*.xwd
+_annotate_tmp.py
+_diff_tmp.py
+rudycanshoot_*.py
+dist/
+.env
+.env.*
+coverage/
+.nyc_output/
