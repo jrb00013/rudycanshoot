@@ -1,7 +1,7 @@
 {
   "name": "rudycanshoot",
-  "version": "1.0.0",
-  "description": "Screenshot tool with MCP server — lets AI assistants capture screens, windows, and terminals. Auto-installs into Claude Code, Cursor, Windsurf, Codex, Gemini CLI, OpenCode, and more.",
+  "version": "1.1.0",
+  "description": "Screenshot tool with MCP server \u2014 lets AI assistants capture screens, windows, and terminals. Auto-installs into Claude Code, Cursor, Windsurf, Codex, Gemini CLI, OpenCode, and more.",
   "keywords": [
     "mcp",
     "screenshot",
@@ -18,7 +18,8 @@
   "author": "Joseph Black <joseph.black@lighthouseavionics.com>",
   "type": "module",
   "bin": {
-    "rudycanshoot": "./bin/screenshot-mcp.js"
+    "rudycanshoot": "./bin/rudycanshoot.js",
+    "screenshot-mcp": "./bin/screenshot-mcp.js"
   },
   "main": "./src/index.js",
   "exports": {
@@ -28,7 +29,8 @@
   "scripts": {
     "start": "node bin/screenshot-mcp.js serve",
     "install-tools": "node bin/screenshot-mcp.js install --all",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "lint": "node --check src/*.js bin/*.js 2>&1 || true"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
