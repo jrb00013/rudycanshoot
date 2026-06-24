@@ -2,8 +2,14 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { readdir, readFile, stat } from "node:fs/promises";
-import { join, basename, extname } from "node:path";
+import { join, basename, extname, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { takeScreenshot, defaultOutputDir } from "./screenshot.js";
+
+const execFileAsync = promisify(execFile);
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const server = new McpServer({
   name: "screenshot-mcp",
@@ -123,6 +129,57 @@ server.tool(
         {
           type: "text",
           text: `Recent screenshots (${recent.length}):\n\n${lines.join("\n")}`,
+        },
+      ],
+    };
+  }
+);
+
+server.tool(
+  "capture_command",
+  "Run a shell command and render its output as a styled terminal screenshot PNG. Works without a display — uses Python/Pillow to render text on a dark terminal background. Returns the file path.",
+  {
+    command: z.string().describe("Shell command to run (passed to sh -c)"),
+    title: z.string().optional().describe("Title bar label (default: the command itself)"),
+    outputDir: z.string().optional().describe("Directory to save into"),
+    filename: z.string().optional().describe("Output filename (default: terminal-<timestamp>.png)"),
+    timeout: z.number().int().min(1).max(120).default(30).describe("Command timeout in seconds"),
+    fontSize: z.number().int().min(8).max(24).default(13).describe("Font size for rendering"),
+  },
+  async ({ command, title, outputDir, filename, timeout, fontSize }) => {
+    const dir = outputDir || defaultOutputDir();
+    const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    const name = filename || `terminal-${ts}.png`;
+    const outPath = join(dir, name);
+
+    const renderScript = join(__dirname, "terminal_render.py");
+    const args = [
+      renderScript,
+      "--cmd", command,
+      "--output", outPath,
+      "--timeout", String(timeout),
+      "--font-size", String(fontSize),
+    ];
+    if (title) args.push("--title", title);
+
+    try {
+      await execFileAsync("python3", args, { timeout: (timeout + 10) * 1000 });
+    } catch (err) {
+      return {
+        content: [{ type: "text", text: `Failed to render terminal screenshot: ${err.message}` }],
+      };
+    }
+
+    return {
+      content: [
+        { type: "text", text: `Terminal screenshot saved: ${outPath}` },
+        {
+          type: "resource",
+          resource: {
+            uri: `file://${outPath}`,
+            mimeType: "image/png",
+            name: basename(outPath),
+          },
         },
       ],
     };
