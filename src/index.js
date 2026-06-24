@@ -1,3 +1,15 @@
 export { takeScreenshot, defaultOutputDir } from "./screenshot.js";
 export { startServer } from "./server.js";
 export { install, AVAILABLE_TOOLS } from "./install.js";
+export { annotateImage } from "./annotate.js";
+export { diffScreenshots } from "./diff.js";
+export { ScreenshotWatcher, watch } from "./watch.js";
+export { ocrImage, ocrAvailable } from "./ocr.js";
+export { recordCapture, getHistory, tagCapture, clearHistory } from "./history.js";
+export { loadConfig, saveConfig, resetConfig, DEFAULTS } from "./config.js";
+export { copyImageToClipboard } from "./clipboard.js";
+export { makeGrid } from "./grid.js";
+export { getTheme, THEME_NAMES, THEMES } from "./themes.js";
+export { cropImage, resizeImage } from "./crop.js";
+export { getImageMetadata } from "./metadata.js";
+export { uploadToImgur, uploadRaw } from "./upload.js";
