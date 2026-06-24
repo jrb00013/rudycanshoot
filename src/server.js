@@ -12,8 +12,8 @@ const execFileAsync = promisify(execFile);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const server = new McpServer({
-  name: "screenshot-mcp",
-  version: "1.0.0",
+  name: "rudycanshoot",
+  version: "1.1.0",
 });
 
 server.tool(
@@ -35,7 +35,7 @@ server.tool(
     outputDir: z
       .string()
       .optional()
-      .describe("Directory to save into (default: ~/.screenshot-mcp/captures/)"),
+      .describe("Directory to save into (default: ~/.rudycanshoot/captures/)"),
   },
   async ({ mode, area, filename, outputDir }) => {
     const path = await takeScreenshot({
@@ -186,11 +186,6 @@ server.tool(
   }
 );
 
-export async function startServer() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  process.stderr.write("screenshot-mcp server started\n");
-}
 
 // annotate_screenshot tool
 server.tool(
@@ -243,3 +238,9 @@ server.tool(
     return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
   }
 );
+
+export async function startServer() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  process.stderr.write("rudycanshoot MCP server started\n");
+}
