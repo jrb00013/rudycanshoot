@@ -146,3 +146,35 @@ When you clone this repo, your AI tool will auto-discover:
 ## License
 
 MIT
+
+---
+
+## Image Processing
+
+| Function | Description |
+|----------|-------------|
+| `annotateImage` | Add text label to a screenshot |
+| `diffScreenshots` | Highlight/heatmap/side-by-side diff |
+| `compareScreenshots` | Pixel-level similarity metrics |
+| `highlightRegions` | Color overlays with labels |
+| `redactRegions` | Fill or blur sensitive areas |
+| `addWatermark` | Corner text watermark |
+| `addBorder` | Solid border with optional radius |
+| `cropImage` | Crop to a region |
+| `resizeImage` | Resize preserving aspect ratio |
+| `stitchImages` | Horizontal or vertical concat |
+| `makeGrid` | N×M grid composite |
+| `makeGif` | Animated GIF from PNG frames |
+| `ocrImage` | Extract text via Tesseract |
+
+## Pipeline API
+
+```js
+import { Pipeline } from "rudycanshoot";
+
+const path = await Pipeline.capture({ mode: "fullscreen" })
+  .annotate("CT-6101 Boson capture", { position: "bottom" })
+  .redact([{ x: 0, y: 0, w: 1920, h: 30 }], { style: "blur" })
+  .watermark("CONFIDENTIAL", { corner: "br" })
+  .save("/tmp/final.png");
+```
