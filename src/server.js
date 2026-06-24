@@ -191,3 +191,55 @@ export async function startServer() {
   await server.connect(transport);
   process.stderr.write("screenshot-mcp server started\n");
 }
+
+// annotate_screenshot tool
+server.tool(
+  "annotate_screenshot",
+  "Add a text label to an existing screenshot. Returns the annotated image path.",
+  {
+    path: z.string().describe("Input image path"),
+    text: z.string().describe("Text to add"),
+    outputPath: z.string().optional().describe("Where to write annotated image (default: replaces input)"),
+    position: z.enum(["top", "bottom", "center"]).default("bottom"),
+    color: z.string().default("#00ff88").describe("Text color as hex, e.g. #ff0000"),
+    fontSize: z.number().int().min(8).max(72).default(18),
+  },
+  async ({ path: inputPath, text, outputPath, position, color, fontSize }) => {
+    const { annotateImage } = await import("./annotate.js");
+    const out = outputPath || inputPath.replace(/\.png$/, "_annotated.png");
+    await annotateImage(inputPath, out, { text, position, color, fontSize });
+    return { content: [{ type: "text", text: `Annotated: ${out}` }] };
+  }
+);
+
+// diff_screenshots tool
+server.tool(
+  "diff_screenshots",
+  "Compare two screenshots and render a difference image.",
+  {
+    before: z.string().describe("Path to 'before' image"),
+    after: z.string().describe("Path to 'after' image"),
+    outputPath: z.string().describe("Where to save the diff image"),
+    mode: z.enum(["highlight", "heatmap", "side-by-side"]).default("highlight"),
+  },
+  async ({ before, after, outputPath, mode }) => {
+    const { diffScreenshots } = await import("./diff.js");
+    await diffScreenshots(before, after, outputPath, mode);
+    return { content: [{ type: "text", text: `Diff saved: ${outputPath}` }] };
+  }
+);
+
+// compare_screenshots tool
+server.tool(
+  "compare_screenshots",
+  "Get pixel-level similarity metrics between two screenshots.",
+  {
+    before: z.string().describe("Path to first image"),
+    after: z.string().describe("Path to second image"),
+  },
+  async ({ before, after }) => {
+    const { compareScreenshots } = await import("./compare.js");
+    const result = await compareScreenshots(before, after);
+    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+  }
+);
