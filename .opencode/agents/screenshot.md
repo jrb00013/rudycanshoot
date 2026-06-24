@@ -1,9 +1,9 @@
 ---
 name: Screenshot
-description: Take and view screenshots using the screenshot-mcp MCP server
+description: Take and view screenshots using the rudycanshoot MCP server
 ---
 
-Use the screenshot-mcp MCP server tools when asked to capture or view the screen:
+Use the rudycanshoot MCP server tools when asked to capture or view the screen:
 
 - `take_screenshot` — capture fullscreen, window, or area
 - `read_screenshot` — load a saved image for viewing

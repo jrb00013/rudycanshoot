@@ -1,12 +1,12 @@
-# screenshot-mcp — Agent Instructions
+# rudycanshoot — Agent Instructions
 
 ## Project Overview
 
-screenshot-mcp is an MCP server and CLI tool that enables AI assistants to capture and view screenshots across Linux, macOS, and Windows.
+rudycanshoot is an MCP server and CLI tool that enables AI assistants to capture and view screenshots across Linux, macOS, and Windows.
 
 ## MCP Server
 
-Start with: `node bin/screenshot-mcp.js serve`
+Start with: `node bin/rudycanshoot.js serve`
 
 Tools exposed:
 - `take_screenshot(mode, area?, filename?, outputDir?)` → file path
@@ -24,8 +24,8 @@ Tools exposed:
 ## Testing
 
 ```bash
-node bin/screenshot-mcp.js capture --mode fullscreen
-node bin/screenshot-mcp.js list
+node bin/rudycanshoot.js capture --mode fullscreen
+node bin/rudycanshoot.js list
 ```
 
 ## Adding a New AI Tool Installer
@@ -37,7 +37,7 @@ Edit `src/install.js`, add an entry to `TOOL_INSTALLERS`:
   const configPath = join(HOME, ".my-tool", "mcp.json");
   const config = readJson(configPath);
   config.mcpServers = config.mcpServers || {};
-  config.mcpServers["screenshot-mcp"] = MCP_ENTRY;
+  config.mcpServers["rudycanshoot"] = MCP_ENTRY;
   writeJson(configPath, config);
 },
 ```

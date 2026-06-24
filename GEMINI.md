@@ -1,4 +1,4 @@
-# screenshot-mcp
+# rudycanshoot
 
 MCP server providing screenshot capabilities for AI assistants.
 
@@ -11,7 +11,7 @@ MCP server providing screenshot capabilities for AI assistants.
 ## Run the server
 
 ```
-node bin/screenshot-mcp.js serve
+node bin/rudycanshoot.js serve
 ```
 
 ## Project structure
@@ -20,5 +20,5 @@ node bin/screenshot-mcp.js serve
 src/screenshot.js   — OS-specific capture logic
 src/server.js       — MCP tool definitions
 src/install.js      — AI tool auto-installer
-bin/screenshot-mcp.js — CLI
+bin/rudycanshoot.js — CLI
 ```

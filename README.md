@@ -1,17 +1,17 @@
-# screenshot-mcp
+# rudycanshoot
 
 An MCP server + CLI that lets AI assistants take and view screenshots. Works with Claude Code, Cursor, Windsurf, Codex CLI, Gemini CLI, OpenCode, Continue, Cline, Aider, and GitHub Copilot.
 
 ## Install
 
 ```bash
-npm install -g screenshot-mcp
+npm install -g rudycanshoot
 ```
 
 Or run without installing:
 
 ```bash
-npx screenshot-mcp serve
+npx rudycanshoot serve
 ```
 
 ## Quick Start
@@ -20,17 +20,17 @@ npx screenshot-mcp serve
 
 ```bash
 # All tools at once
-screenshot-mcp install --all
+rudycanshoot install --all
 
 # Or a specific tool
-screenshot-mcp install --tool claude-code
-screenshot-mcp install --tool cursor
-screenshot-mcp install --tool windsurf
-screenshot-mcp install --tool codex
-screenshot-mcp install --tool gemini
-screenshot-mcp install --tool opencode
-screenshot-mcp install --tool continue
-screenshot-mcp install --tool cline
+rudycanshoot install --tool claude-code
+rudycanshoot install --tool cursor
+rudycanshoot install --tool windsurf
+rudycanshoot install --tool codex
+rudycanshoot install --tool gemini
+rudycanshoot install --tool opencode
+rudycanshoot install --tool continue
+rudycanshoot install --tool cline
 ```
 
 ### 2. Restart your AI tool
@@ -58,7 +58,7 @@ Ask your AI: *"Take a screenshot and show me what's on screen."*
 | `mode` | `fullscreen\|window\|area` | `fullscreen` | What to capture |
 | `area` | string | — | `x,y,width,height` — required when mode=area |
 | `filename` | string | auto | Output filename |
-| `outputDir` | string | `~/.screenshot-mcp/captures/` | Where to save |
+| `outputDir` | string | `~/.rudycanshoot/captures/` | Where to save |
 
 ---
 
@@ -66,19 +66,19 @@ Ask your AI: *"Take a screenshot and show me what's on screen."*
 
 ```bash
 # Take a screenshot
-screenshot-mcp capture
-screenshot-mcp capture --mode window
-screenshot-mcp capture --mode area --area 0,0,1920,1080
-screenshot-mcp capture --output /tmp/snap.png
+rudycanshoot capture
+rudycanshoot capture --mode window
+rudycanshoot capture --mode area --area 0,0,1920,1080
+rudycanshoot capture --output /tmp/snap.png
 
 # List recent screenshots
-screenshot-mcp list
+rudycanshoot list
 
 # Start MCP server (used by AI tools — usually run automatically)
-screenshot-mcp serve
+rudycanshoot serve
 
 # Configure AI tools
-screenshot-mcp install --all
+rudycanshoot install --all
 ```
 
 ---

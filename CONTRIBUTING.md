@@ -3,8 +3,8 @@
 ## Getting started
 
 ```bash
-git clone https://github.com/jrb00013/screenshot-mcp
-cd screenshot-mcp
+git clone https://github.com/jrb00013/rudycanshoot
+cd rudycanshoot
 npm install
 pip3 install pillow   # required for terminal capture and image processing
 ```
@@ -45,7 +45,7 @@ Edit `src/install.js`. Add a key to `TOOL_INSTALLERS`:
 },
 ```
 
-Then add a case to the `install` command in `bin/screenshot-mcp.js`.
+Then add a case to the `install` command in `bin/rudycanshoot.js`.
 
 ## Adding an MCP tool
 

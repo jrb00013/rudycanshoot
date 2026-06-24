@@ -1,6 +1,6 @@
-# screenshot-mcp
+# rudycanshoot
 
-This is the screenshot-mcp project — an MCP server that lets AI assistants take and view screenshots.
+This is the rudycanshoot project — an MCP server that lets AI assistants take and view screenshots.
 
 ## MCP Tools Available
 
@@ -14,9 +14,9 @@ This is the screenshot-mcp project — an MCP server that lets AI assistants tak
 
 ```bash
 npm install          # install dependencies
-node bin/screenshot-mcp.js serve    # start MCP server (stdio)
-node bin/screenshot-mcp.js capture  # take a screenshot from CLI
-node bin/screenshot-mcp.js install --all  # configure all AI tools
+node bin/rudycanshoot.js serve    # start MCP server (stdio)
+node bin/rudycanshoot.js capture  # take a screenshot from CLI
+node bin/rudycanshoot.js install --all  # configure all AI tools
 ```
 
 ## Key Files
@@ -24,7 +24,7 @@ node bin/screenshot-mcp.js install --all  # configure all AI tools
 - `src/screenshot.js` — platform-specific capture logic (Linux/macOS/Windows)
 - `src/server.js` — MCP server with tool definitions
 - `src/install.js` — auto-installer for AI tools
-- `bin/screenshot-mcp.js` — CLI entry point
+- `bin/rudycanshoot.js` — CLI entry point
 
 ## Screenshot Backends (Linux, in priority order)
 

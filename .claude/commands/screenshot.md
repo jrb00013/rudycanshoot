@@ -12,6 +12,6 @@ Take a screenshot and show it to Claude.
 
 ## Steps
 
-1. Call `mcp__screenshot-mcp__take_screenshot` with the appropriate mode
-2. Call `mcp__screenshot-mcp__read_screenshot` with the returned path to load the image
+1. Call `mcp__rudycanshoot__take_screenshot` with the appropriate mode
+2. Call `mcp__rudycanshoot__read_screenshot` with the returned path to load the image
 3. Analyze and describe what is visible in the screenshot

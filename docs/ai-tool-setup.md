@@ -116,7 +116,7 @@ Add to VS Code `settings.json`:
 }
 ```
 
-Rules file `.clinerules/screenshot-mcp.md` is included and auto-loaded.
+Rules file `.clinerules/rudycanshoot.md` is included and auto-loaded.
 
 ---
 

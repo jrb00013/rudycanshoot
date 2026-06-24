@@ -1,4 +1,4 @@
-# GitHub Copilot Instructions — screenshot-mcp
+# GitHub Copilot Instructions — rudycanshoot
 
 This project is an MCP server + CLI for taking screenshots in AI-driven workflows.
 
@@ -7,7 +7,7 @@ This project is an MCP server + CLI for taking screenshots in AI-driven workflow
 - Platform-specific screenshot logic is in `src/screenshot.js` — add new backends there
 - MCP tool definitions are in `src/server.js` using `@modelcontextprotocol/sdk`
 - AI tool installers are in `src/install.js` — each tool gets an entry in `TOOL_INSTALLERS`
-- The CLI in `bin/screenshot-mcp.js` uses `commander` — add new subcommands there
+- The CLI in `bin/rudycanshoot.js` uses `commander` — add new subcommands there
 
 ## When suggesting code
 

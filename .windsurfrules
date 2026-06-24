@@ -1,9 +1,9 @@
-# screenshot-mcp rules for Windsurf
+# rudycanshoot rules for Windsurf
 
-This is the screenshot-mcp project. Key facts:
+This is the rudycanshoot project. Key facts:
 
-- Entry point: `bin/screenshot-mcp.js` (CLI + MCP server)
-- MCP server command: `node bin/screenshot-mcp.js serve`
+- Entry point: `bin/rudycanshoot.js` (CLI + MCP server)
+- MCP server command: `node bin/rudycanshoot.js serve`
 - Platform logic: `src/screenshot.js` — Linux (X11/Wayland), macOS, Windows
 - Tool installers: `src/install.js` — adds MCP config to AI tools
 
