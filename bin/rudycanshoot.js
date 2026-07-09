@@ -2,11 +2,14 @@
 import { program } from "commander";
 import { createRequire } from "module";
 import { fileURLToPath } from "url";
-import { join, dirname } from "path";
+import { basename, join, dirname } from "path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const pkg = require(join(__dirname, "../package.json"));
+
+// commander option accumulator for repeatable flags (--cookie, --header)
+const collect = (val, acc) => { acc.push(val); return acc; };
 
 program
   .name("screenshot-mcp")
@@ -119,5 +122,43 @@ program
     process.on("SIGINT", () => watcher.stop());
   });
 
+program
+  .command("url <url>")
+  .description("Headlessly render a web page and screenshot it (no visible browser)")
+  .option("-o, --output <path>", "Output file path")
+  .option("-d, --dir <dir>", "Output directory")
+  .option("--width <px>", "Viewport width", "1600")
+  .option("--height <px>", "Viewport height", "1000")
+  .option("--full-page", "Capture the full scrollable page")
+  .option("--wait <ms>", "Settle delay after load (for maps/canvas)", "4000")
+  .option("--wait-selector <css>", "Also wait until this CSS selector exists")
+  .option("--cookie <name=value>", "Auth cookie, repeatable", collect, [])
+  .option("--header <k:v>", "Extra HTTP header, repeatable", collect, [])
+  .action(async (url, opts) => {
+    const { captureUrl } = await import("../src/url_capture.js");
+    const cookies = {};
+    for (const c of opts.cookie) {
+      const i = c.indexOf("=");
+      if (i > 0) cookies[c.slice(0, i)] = c.slice(i + 1);
+    }
+    const headers = {};
+    for (const h of opts.header) {
+      const i = h.indexOf(":");
+      if (i > 0) headers[h.slice(0, i).trim()] = h.slice(i + 1).trim();
+    }
+    const path = await captureUrl({
+      url,
+      width: Number(opts.width),
+      height: Number(opts.height),
+      fullPage: !!opts.fullPage,
+      waitMs: Number(opts.wait),
+      waitSelector: opts.waitSelector,
+      cookies: Object.keys(cookies).length ? cookies : null,
+      headers: Object.keys(headers).length ? headers : null,
+      filename: opts.output ? basename(opts.output) : undefined,
+      outputDir: opts.dir || (opts.output ? dirname(opts.output) : undefined),
+    });
+    console.log(path);
+  });
+
 program.parse();
-// watch subcommand

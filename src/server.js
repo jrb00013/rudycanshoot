@@ -64,6 +64,38 @@ server.tool(
 );
 
 server.tool(
+  "capture_url",
+  "Headlessly render a web page (no visible browser) and screenshot it. Supports auth via cookies, a custom viewport, full-page capture, and waiting for dynamic content (e.g. maps) to settle. Returns the saved file path.",
+  {
+    url: z.string().describe("The page URL to capture"),
+    width: z.number().int().min(1).default(1600).describe("Viewport width in px"),
+    height: z.number().int().min(1).default(1000).describe("Viewport height in px"),
+    fullPage: z.boolean().default(false).describe("Capture the full scrollable page"),
+    waitMs: z.number().int().min(0).default(4000).describe("Settle delay after load (ms) for dynamic content"),
+    waitSelector: z.string().optional().describe("Also wait until this CSS selector exists"),
+    cookies: z.record(z.string()).optional().describe("Auth cookies as {name: value} (sent as a Cookie header)"),
+    headers: z.record(z.string()).optional().describe("Extra HTTP headers as {name: value}"),
+    filename: z.string().optional().describe("Output filename"),
+    outputDir: z.string().optional().describe("Directory to save into"),
+  },
+  async ({ url, width, height, fullPage, waitMs, waitSelector, cookies, headers, filename, outputDir }) => {
+    const { captureUrl } = await import("./url_capture.js");
+    const path = await captureUrl({
+      url, width, height, fullPage, waitMs, waitSelector,
+      cookies: cookies && Object.keys(cookies).length ? cookies : null,
+      headers: headers && Object.keys(headers).length ? headers : null,
+      filename, outputDir,
+    });
+    return {
+      content: [
+        { type: "text", text: `URL screenshot saved: ${path}` },
+        { type: "resource", resource: { uri: `file://${path}`, mimeType: "image/png", name: basename(path) } },
+      ],
+    };
+  }
+);
+
+server.tool(
   "read_screenshot",
   "Read a previously captured screenshot as base64 so the AI can view it.",
   {

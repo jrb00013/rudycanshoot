@@ -1,4 +1,5 @@
 export { takeScreenshot, defaultOutputDir } from "./screenshot.js";
+export { captureUrl, cookieHeader } from "./url_capture.js";
 export { startServer } from "./server.js";
 export { install, AVAILABLE_TOOLS } from "./install.js";
 export { annotateImage } from "./annotate.js";
