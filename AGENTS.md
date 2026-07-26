@@ -12,6 +12,9 @@ Tools exposed:
 - `take_screenshot(mode, area?, filename?, outputDir?)` → file path
 - `read_screenshot(path)` → base64 image
 - `list_screenshots(limit?)` → list of recent captures
+- `record_video(durationSec?, fps?, area?, temporary?, returnFrames?, maxFrames?)` → video path + frames
+- `read_video(path, maxFrames?)` → frames as images for AI viewing
+- `list_videos(limit?)` / `cleanup_videos(all?, olderThanMinutes?)`
 
 ## Coding Conventions
 

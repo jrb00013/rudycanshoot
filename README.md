@@ -50,6 +50,10 @@ Ask your AI: *"Take a screenshot and show me what's on screen."*
 | `take_screenshot` | Capture fullscreen, active window, or a region |
 | `read_screenshot` | Read a saved image so the AI can view it |
 | `list_screenshots` | List recent captures |
+| `record_video` | Record a temporary screen video; returns frames the AI can watch |
+| `read_video` | Extract frames from a saved video for visual review |
+| `list_videos` | List recent recordings |
+| `cleanup_videos` | Delete temporary (or all) recordings |
 
 ### take_screenshot parameters
 
@@ -73,6 +77,11 @@ rudycanshoot capture --output /tmp/snap.png
 
 # List recent screenshots
 rudycanshoot list
+
+# Record a temporary screen video (AI can read frames via MCP)
+rudycanshoot record --duration 5 --fps 4
+rudycanshoot videos
+rudycanshoot cleanup-videos
 
 # Start MCP server (used by AI tools — usually run automatically)
 rudycanshoot serve

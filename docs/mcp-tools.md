@@ -97,6 +97,63 @@ Compare two screenshots and render a difference image.
 
 ---
 
+## record_video
+
+Record a temporary screen video for visual monitoring. By default extracts evenly spaced frames and returns them as images so the AI can watch what happened.
+
+**Parameters:**
+
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
+| `durationSec` | number | `5` | Recording length (seconds) |
+| `fps` | int | `4` | Capture rate for frame-sampling backend |
+| `area` | string | — | Optional `x,y,width,height` region |
+| `temporary` | bool | `true` | Store under `~/.rudycanshoot/videos/tmp/` |
+| `returnFrames` | bool | `true` | Include frames as viewable images |
+| `maxFrames` | int | `12` | Max frames returned to the model |
+
+**Returns:** Video path + image frames (when `returnFrames=true`)
+
+**Backends (priority):** `wf-recorder` (Wayland) → `ffmpeg` screen grab → screenshot frame sampling → GIF fallback
+
+**Requires:** A screenshot tool (`grim`/`scrot`/…) and/or `ffmpeg` (auto-downloads a static Linux binary to `~/.rudycanshoot/bin/` when needed). Optional: `npm i ffmpeg-static`.
+
+---
+
+## read_video
+
+Extract frames from a saved video/GIF so the AI can visually review it.
+
+**Parameters:**
+
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
+| `path` | string | — | Absolute path to video/GIF |
+| `maxFrames` | int | `12` | Max evenly spaced frames |
+
+**Returns:** Base64 PNG frames
+
+---
+
+## list_videos
+
+List recent recordings (including temporary ones).
+
+---
+
+## cleanup_videos
+
+Delete temporary recordings (default) or all recordings.
+
+**Parameters:**
+
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
+| `all` | bool | `false` | Delete kept videos too |
+| `olderThanMinutes` | number | `0` | Only delete older than N minutes |
+
+---
+
 ## ocr_screenshot
 
 Extract text from a screenshot using Tesseract OCR.

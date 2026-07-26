@@ -24,3 +24,13 @@ export { addBorder } from "./border.js";
 export { Pipeline } from "./pipeline.js";
 export { generateReport } from "./report.js";
 export { compareScreenshots } from "./compare.js";
+export {
+  recordVideo,
+  extractFrames,
+  readVideoFrames,
+  listVideos,
+  cleanupVideos,
+  defaultVideoDir,
+  defaultTempVideoDir,
+  resolveFfmpeg,
+} from "./video.js";

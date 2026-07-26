@@ -1,17 +1,39 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
 import { execSync } from "node:child_process";
 
 const HOME = homedir();
+const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const LOCAL_BIN = join(PKG_ROOT, "bin", "rudycanshoot.js");
+const LOCAL_BIN_LEGACY = join(PKG_ROOT, "bin", "screenshot-mcp.js");
 
 function resolveServerCmd() {
+  // Prefer this checkout / local install with an absolute path so MCP
+  // clients do not depend on cwd or a global npm link.
+  const local = existsSync(LOCAL_BIN)
+    ? LOCAL_BIN
+    : existsSync(LOCAL_BIN_LEGACY)
+      ? LOCAL_BIN_LEGACY
+      : null;
+  if (local && existsSync(join(PKG_ROOT, "node_modules", "@modelcontextprotocol", "sdk"))) {
+    // Prefer a stable `node` on PATH over a versioned Cursor Agent binary.
+    let nodeCmd = process.execPath;
+    try {
+      const whichNode = execSync("command -v node", { encoding: "utf8" }).trim();
+      if (whichNode) nodeCmd = whichNode;
+    } catch {}
+    return { command: nodeCmd, args: [local, "serve"] };
+  }
   try {
     const npmBin = execSync("npm root -g", { encoding: "utf8" }).trim();
-    const pkg = join(dirname(npmBin), "bin", "screenshot-mcp");
-    if (existsSync(pkg)) return { command: pkg, args: ["serve"] };
+    for (const name of ["rudycanshoot", "screenshot-mcp"]) {
+      const pkg = join(dirname(npmBin), "bin", name);
+      if (existsSync(pkg)) return { command: pkg, args: ["serve"] };
+    }
   } catch {}
-  return { command: "npx", args: ["screenshot-mcp", "serve"] };
+  return { command: "npx", args: ["rudycanshoot", "serve"] };
 }
 
 function readJson(path, fallback = {}) {
@@ -58,6 +80,8 @@ const TOOL_INSTALLERS = {
     const settingsPath = join(HOME, ".claude", "settings.json");
     const settings = readJson(settingsPath);
     settings.mcpServers = settings.mcpServers || {};
+    settings.mcpServers["rudycanshoot"] = MCP_ENTRY;
+    // Keep legacy alias so existing chats keep working
     settings.mcpServers["screenshot-mcp"] = MCP_ENTRY;
     writeJson(settingsPath, settings);
 
@@ -77,9 +101,11 @@ Take a screenshot and show it to Claude.
 \`/screenshot area x,y,w,h\` — capture region
 
 ## Steps
-1. Call \`mcp__screenshot-mcp__take_screenshot\` with the appropriate mode
-2. Call \`mcp__screenshot-mcp__read_screenshot\` with the returned path
+1. Call \`mcp__rudycanshoot__take_screenshot\` with the appropriate mode
+2. Call \`mcp__rudycanshoot__read_screenshot\` with the returned path
 3. Describe what you see in the screenshot
+
+For visual monitoring over time, use \`record_video\` (returns frames the model can watch).
 `
       );
     }
@@ -89,15 +115,29 @@ Take a screenshot and show it to Claude.
     const configPath = join(HOME, ".cursor", "mcp.json");
     const config = readJson(configPath);
     config.mcpServers = config.mcpServers || {};
+    config.mcpServers["rudycanshoot"] = MCP_ENTRY;
     config.mcpServers["screenshot-mcp"] = MCP_ENTRY;
     writeJson(configPath, config);
+
+    // Project-local MCP config when installing from a checkout
+    const projectMcp = join(PKG_ROOT, ".cursor", "mcp.json");
+    writeJson(projectMcp, {
+      mcpServers: {
+        rudycanshoot: MCP_ENTRY,
+      },
+    });
+    writeJson(join(PKG_ROOT, ".mcp.json"), {
+      mcpServers: {
+        rudycanshoot: MCP_ENTRY,
+      },
+    });
   },
 
   windsurf: () => {
     const configPath = join(HOME, ".codeium", "windsurf", "mcp_config.json");
     const config = readJson(configPath);
     config.mcpServers = config.mcpServers || {};
-    config.mcpServers["screenshot-mcp"] = MCP_ENTRY;
+    config.mcpServers["rudycanshoot"] = MCP_ENTRY;
     writeJson(configPath, config);
   },
 
@@ -105,15 +145,17 @@ Take a screenshot and show it to Claude.
     const agentsPath = join(HOME, "AGENTS.md");
     appendUnique(
       agentsPath,
-      `## screenshot-mcp
+      `## rudycanshoot
 
-MCP server available: \`screenshot-mcp\`
+MCP server available: \`rudycanshoot\`
 - \`take_screenshot\` — capture screen/window/area, returns file path
 - \`read_screenshot\` — read a screenshot as base64 image
 - \`list_screenshots\` — list recent captures
+- \`record_video\` — temporary screen recording; returns frames the AI can watch
+- \`read_video\` — extract frames from a saved video for visual review
 
-Use these tools whenever asked to take a screenshot or inspect the screen.`,
-      "screenshot-mcp"
+Use these tools whenever asked to take a screenshot, record the screen, or inspect the screen.`,
+      "rudycanshoot"
     );
   },
 
@@ -121,7 +163,7 @@ Use these tools whenever asked to take a screenshot or inspect the screen.`,
     const settingsPath = join(HOME, ".gemini", "settings.json");
     const settings = readJson(settingsPath);
     settings.mcpServers = settings.mcpServers || {};
-    settings.mcpServers["screenshot-mcp"] = MCP_ENTRY;
+    settings.mcpServers["rudycanshoot"] = MCP_ENTRY;
     writeJson(settingsPath, settings);
   },
 
@@ -130,7 +172,7 @@ Use these tools whenever asked to take a screenshot or inspect the screen.`,
     const config = readJson(configPath);
     config.mcp = config.mcp || {};
     config.mcp.servers = config.mcp.servers || {};
-    config.mcp.servers["screenshot-mcp"] = MCP_ENTRY;
+    config.mcp.servers["rudycanshoot"] = MCP_ENTRY;
     writeJson(configPath, config);
 
     const agentDir = join(HOME, ".config", "opencode", "agents");
@@ -141,11 +183,11 @@ Use these tools whenever asked to take a screenshot or inspect the screen.`,
         agentPath,
         `---
 name: Screenshot
-description: Take and view screenshots
+description: Take and view screenshots / short screen videos
 ---
 
-Use the screenshot-mcp MCP server to capture screens.
-Tools: take_screenshot, read_screenshot, list_screenshots
+Use the rudycanshoot MCP server to capture screens.
+Tools: take_screenshot, read_screenshot, list_screenshots, record_video, read_video
 `
       );
     }
@@ -155,8 +197,8 @@ Tools: take_screenshot, read_screenshot, list_screenshots
     const configPath = join(HOME, ".continue", "config.json");
     const config = readJson(configPath);
     config.mcpServers = config.mcpServers || [];
-    if (!config.mcpServers.find((s) => s.name === "screenshot-mcp")) {
-      config.mcpServers.push({ name: "screenshot-mcp", ...MCP_ENTRY });
+    if (!config.mcpServers.find((s) => s.name === "rudycanshoot")) {
+      config.mcpServers.push({ name: "rudycanshoot", ...MCP_ENTRY });
       writeJson(configPath, config);
     } else {
       console.log(`  ~ ${configPath} (already configured)`);
@@ -166,17 +208,17 @@ Tools: take_screenshot, read_screenshot, list_screenshots
   cline: () => {
     const rulesDir = join(HOME, ".clinerules");
     mkdirSync(rulesDir, { recursive: true });
-    const rulePath = join(rulesDir, "screenshot-mcp.md");
+    const rulePath = join(rulesDir, "rudycanshoot.md");
     if (!existsSync(rulePath)) {
       writeText(
         rulePath,
-        `# screenshot-mcp
+        `# rudycanshoot
 
-MCP server: screenshot-mcp
-Available tools: take_screenshot, read_screenshot, list_screenshots
+MCP server: rudycanshoot
+Available tools: take_screenshot, read_screenshot, list_screenshots, record_video, read_video, list_videos, cleanup_videos
 
-When the user asks to take a screenshot, inspect the screen, or show what's on screen,
-use the screenshot-mcp tools to capture and read the image.
+When the user asks to take a screenshot, record the screen, inspect the screen, or show what's on screen,
+use the rudycanshoot tools to capture and read the image/video frames.
 `
       );
     } else {
@@ -189,9 +231,9 @@ use the screenshot-mcp tools to capture and read the image.
     const configPath = join(HOME, ".aider.conf.yml");
     appendUnique(
       configPath,
-      `# screenshot-mcp: use 'screenshot-mcp serve' as an MCP server in your editor
-# aider does not natively support MCP; run screenshot-mcp from your AI editor instead`,
-      "screenshot-mcp"
+      `# rudycanshoot: use 'rudycanshoot serve' as an MCP server in your editor
+# aider does not natively support MCP; run rudycanshoot from your AI editor instead`,
+      "rudycanshoot"
     );
   },
 
@@ -199,14 +241,13 @@ use the screenshot-mcp tools to capture and read the image.
     const instructionsPath = join(HOME, ".github", "copilot-instructions.md");
     appendUnique(
       instructionsPath,
-      `## screenshot-mcp
+      `## rudycanshoot
 
-A screenshot MCP server (screenshot-mcp) may be configured in your editor.
-When asked to take or view a screenshot, use the MCP tools:
-- take_screenshot (mode: fullscreen|window|area)
-- read_screenshot (path: string)
-- list_screenshots`,
-      "screenshot-mcp"
+A screenshot/video MCP server (rudycanshoot) may be configured in your editor.
+When asked to take or view a screenshot or short screen recording, use the MCP tools:
+- take_screenshot / read_screenshot / list_screenshots
+- record_video / read_video / list_videos / cleanup_videos`,
+      "rudycanshoot"
     );
   },
 };

@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Fixed
+- MCP failed to load when `node_modules` was missing; install now wires absolute local paths into Cursor (`rudycanshoot` + legacy `screenshot-mcp`)
+- WSL hosts without Linux screenshot tools now fall back to Windows PowerShell desktop capture
+
+### Added
+- Screen video recording for AI visual monitoring: `record_video`, `read_video`, `list_videos`, `cleanup_videos`
+- CLI: `record`, `videos`, `cleanup-videos`
+- Frame extraction returns images so the model can watch recordings (default up to 12 frames)
+- Temporary videos under `~/.rudycanshoot/videos/tmp/` with cleanup
+- Optional `ffmpeg-static`; MP4 encode with GIF fallback; even-dimension scale for libx264
+
 ## [1.1.0] - 2026-06-24
 
 ### Added

@@ -1,8 +1,11 @@
 {
   "mcpServers": {
-    "screenshot-mcp": {
-      "command": "node",
-      "args": ["bin/screenshot-mcp.js", "serve"]
+    "rudycanshoot": {
+      "command": "/usr/bin/node",
+      "args": [
+        "/home/josep/projects/rudycanshoot/bin/rudycanshoot.js",
+        "serve"
+      ]
     }
   }
 }

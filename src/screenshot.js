@@ -27,6 +27,88 @@ function which(cmd) {
   }
 }
 
+function powershellExe() {
+  if (which("powershell.exe")) return "powershell.exe";
+  const fallback = "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe";
+  return existsSync(fallback) ? fallback : null;
+}
+
+async function toWindowsPath(linuxPath) {
+  try {
+    const { stdout } = await execFileAsync("wslpath", ["-w", linuxPath]);
+    return stdout.trim();
+  } catch {
+    if (linuxPath.startsWith("/mnt/") && linuxPath.length > 6 && linuxPath[6] === "/") {
+      const drive = linuxPath[5];
+      return `${drive.toUpperCase()}:${linuxPath.slice(6).replace(/\//g, "\\")}`;
+    }
+    return null;
+  }
+}
+
+/**
+ * WSL → Windows desktop capture via System.Drawing (works when Linux
+ * screenshot tools are missing but the Windows host is available).
+ */
+async function captureViaWindowsPowershell(outputPath, opts = {}) {
+  const ps = powershellExe();
+  if (!ps) return false;
+
+  let winPath = await toWindowsPath(outputPath);
+  let tempWin = null;
+  if (!winPath) {
+    tempWin = `C:\\Windows\\Temp\\rudycanshoot-${Date.now()}.png`;
+    winPath = tempWin;
+  }
+
+  const { area = null } = opts;
+  let crop = "";
+  if (area) {
+    const [x, y, w, h] = area.split(",").map(Number);
+    crop = `
+$bmp2 = New-Object System.Drawing.Bitmap ${w}, ${h}
+$g2 = [System.Drawing.Graphics]::FromImage($bmp2)
+$g2.DrawImage($bmp, 0, 0, (New-Object System.Drawing.Rectangle ${x},${y},${w},${h}), [System.Drawing.GraphicsUnit]::Pixel)
+$g2.Dispose(); $bmp.Dispose(); $bmp = $bmp2
+`;
+  }
+
+  const script = `
+Add-Type -AssemblyName System.Windows.Forms,System.Drawing
+$screen = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+$bmp = New-Object System.Drawing.Bitmap $screen.Width, $screen.Height
+$g = [System.Drawing.Graphics]::FromImage($bmp)
+$g.CopyFromScreen($screen.Location, [System.Drawing.Point]::Empty, $screen.Size)
+$g.Dispose()
+${crop}
+$bmp.Save('${winPath.replace(/'/g, "''")}', [System.Drawing.Imaging.ImageFormat]::Png)
+$bmp.Dispose()
+`.trim();
+
+  try {
+    await execFileAsync(ps, ["-NoProfile", "-Command", script], { timeout: 30_000 });
+  } catch {
+    return false;
+  }
+
+  if (tempWin) {
+    try {
+      const { stdout } = await execFileAsync(ps, [
+        "-NoProfile",
+        "-Command",
+        `[Convert]::ToBase64String([IO.File]::ReadAllBytes('${tempWin}'))`,
+      ]);
+      const { writeFile } = await import("node:fs/promises");
+      await writeFile(outputPath, Buffer.from(stdout.trim(), "base64"));
+      await execFileAsync(ps, ["-NoProfile", "-Command", `Remove-Item -Force '${tempWin}'`]).catch(() => {});
+    } catch {
+      return false;
+    }
+  }
+
+  return existsSync(outputPath);
+}
+
 async function captureLinux(outputPath, opts = {}) {
   const { window: windowMode = false, area = null } = opts;
 
@@ -83,8 +165,14 @@ async function captureLinux(outputPath, opts = {}) {
     return xwdPath;
   }
 
+  // WSL fallback: capture the Windows host desktop.
+  if (await captureViaWindowsPowershell(outputPath, { area, window: windowMode })) {
+    return;
+  }
+
   throw new Error(
     "No screenshot tool found. Install one of: scrot, maim, grim (Wayland), gnome-screenshot, or ImageMagick. " +
+    "On WSL, powershell.exe desktop capture is used when available. " +
     "For CI/headless, use rudycanshoot capture_command instead."
   );
 }

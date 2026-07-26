@@ -271,6 +271,187 @@ server.tool(
   }
 );
 
+// record_video — temporary screen recording + optional frame transfer for AI viewing
+server.tool(
+  "record_video",
+  "Record a temporary screen video for visual monitoring. By default returns evenly spaced frames as images so the AI can watch/understand what happened, plus the saved video path.",
+  {
+    durationSec: z
+      .number()
+      .min(0.5)
+      .max(120)
+      .default(5)
+      .describe("How long to record (seconds)"),
+    fps: z
+      .number()
+      .int()
+      .min(1)
+      .max(30)
+      .default(4)
+      .describe("Capture frame rate (frame-sampling backend)"),
+    area: z
+      .string()
+      .optional()
+      .describe("Optional region as 'x,y,width,height'"),
+    temporary: z
+      .boolean()
+      .default(true)
+      .describe("Store under ~/.rudycanshoot/videos/tmp/ for easy cleanup"),
+    returnFrames: z
+      .boolean()
+      .default(true)
+      .describe("Include extracted frames as images the AI can view"),
+    maxFrames: z
+      .number()
+      .int()
+      .min(1)
+      .max(30)
+      .default(12)
+      .describe("Max frames returned to the AI when returnFrames=true"),
+    filename: z.string().optional().describe("Output filename"),
+    outputDir: z.string().optional().describe("Override output directory"),
+  },
+  async ({ durationSec, fps, area, temporary, returnFrames, maxFrames, filename, outputDir }) => {
+    const { recordVideo, readVideoFrames, cleanupFrameDir } = await import("./video.js");
+    const result = await recordVideo({
+      durationSec,
+      fps,
+      area,
+      temporary,
+      filename,
+      outputDir,
+    });
+
+    const content = [
+      {
+        type: "text",
+        text: [
+          `Video saved: ${result.path}`,
+          `backend=${result.backend} duration=${result.durationSec}s fps=${result.fps} temporary=${result.temporary}`,
+          result.encodeWarning ? `note: ${result.encodeWarning}` : null,
+          returnFrames
+            ? `Returning up to ${maxFrames} frames so you can visually review the recording.`
+            : "Frames not returned (returnFrames=false). Use read_video to inspect.",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      },
+      {
+        type: "resource",
+        resource: {
+          uri: `file://${result.path}`,
+          mimeType: result.path.endsWith(".gif") ? "image/gif" : "video/mp4",
+          name: basename(result.path),
+        },
+      },
+    ];
+
+    if (returnFrames) {
+      const viewed = await readVideoFrames(result.path, { maxFrames });
+      content[0].text += `\nframes=${viewed.frames.length}`;
+      for (let i = 0; i < viewed.frames.length; i++) {
+        const fr = viewed.frames[i];
+        content.push({
+          type: "text",
+          text: `Frame ${i + 1}/${viewed.frames.length} (${basename(fr.path)})`,
+        });
+        content.push({
+          type: "image",
+          data: fr.base64,
+          mimeType: fr.mimeType,
+        });
+      }
+      await cleanupFrameDir(viewed.outputDir);
+    }
+
+    return { content };
+  }
+);
+
+server.tool(
+  "read_video",
+  "Extract frames from a saved video/GIF and return them as images so the AI can watch and understand the recording.",
+  {
+    path: z.string().describe("Absolute path to the video or GIF"),
+    maxFrames: z
+      .number()
+      .int()
+      .min(1)
+      .max(30)
+      .default(12)
+      .describe("Max evenly spaced frames to return"),
+  },
+  async ({ path: videoPath, maxFrames }) => {
+    const { readVideoFrames, cleanupFrameDir } = await import("./video.js");
+    const viewed = await readVideoFrames(videoPath, { maxFrames });
+    const content = [
+      {
+        type: "text",
+        text: `Video ${videoPath}\nduration≈${viewed.durationSec ?? "?"}s\nframes returned: ${viewed.frames.length}`,
+      },
+    ];
+    for (let i = 0; i < viewed.frames.length; i++) {
+      const fr = viewed.frames[i];
+      content.push({
+        type: "text",
+        text: `Frame ${i + 1}/${viewed.frames.length}`,
+      });
+      content.push({
+        type: "image",
+        data: fr.base64,
+        mimeType: fr.mimeType,
+      });
+    }
+    await cleanupFrameDir(viewed.outputDir);
+    return { content };
+  }
+);
+
+server.tool(
+  "list_videos",
+  "List recent screen recordings (including temporary ones).",
+  {
+    limit: z.number().int().min(1).max(100).default(20),
+  },
+  async ({ limit }) => {
+    const { listVideos } = await import("./video.js");
+    const videos = await listVideos({ limit });
+    if (videos.length === 0) {
+      return { content: [{ type: "text", text: "No videos yet." }] };
+    }
+    const lines = videos.map(
+      (v) =>
+        `${new Date(v.mtime).toISOString().slice(0, 19)}  ${(v.size / 1024).toFixed(1)}K  ${v.temporary ? "tmp" : "keep"}  ${v.path}`
+    );
+    return {
+      content: [{ type: "text", text: `Recent videos (${videos.length}):\n\n${lines.join("\n")}` }],
+    };
+  }
+);
+
+server.tool(
+  "cleanup_videos",
+  "Delete temporary screen recordings (default) or all recordings.",
+  {
+    all: z.boolean().default(false).describe("If true, delete all videos not just tmp/"),
+    olderThanMinutes: z
+      .number()
+      .min(0)
+      .default(0)
+      .describe("Only delete files older than this many minutes (0 = all matching)"),
+  },
+  async ({ all, olderThanMinutes }) => {
+    const { cleanupVideos } = await import("./video.js");
+    const result = await cleanupVideos({
+      all,
+      olderThanMs: olderThanMinutes > 0 ? olderThanMinutes * 60_000 : 0,
+    });
+    return {
+      content: [{ type: "text", text: `Removed ${result.removed} video file(s).` }],
+    };
+  }
+);
+
 export async function startServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);

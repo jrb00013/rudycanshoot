@@ -12,7 +12,7 @@ const pkg = require(join(__dirname, "../package.json"));
 const collect = (val, acc) => { acc.push(val); return acc; };
 
 program
-  .name("screenshot-mcp")
+  .name("rudycanshoot")
   .description(pkg.description)
   .version(pkg.version);
 
@@ -159,6 +159,64 @@ program
       outputDir: opts.dir || (opts.output ? dirname(opts.output) : undefined),
     });
     console.log(path);
+  });
+
+program
+  .command("record")
+  .description("Record a temporary screen video for AI visual monitoring")
+  .option("-t, --duration <sec>", "Duration in seconds", "5")
+  .option("-f, --fps <n>", "Frames per second", "4")
+  .option("-a, --area <x,y,w,h>", "Region to capture")
+  .option("-o, --output <path>", "Output file path")
+  .option("-d, --dir <dir>", "Output directory")
+  .option("--keep", "Store in videos/ instead of videos/tmp/")
+  .option("--frames <n>", "Also extract N frames to a sibling frames/ dir", "0")
+  .action(async (opts) => {
+    const { recordVideo, extractFrames } = await import("../src/video.js");
+    const pathMod = await import("node:path");
+    const result = await recordVideo({
+      durationSec: Number(opts.duration),
+      fps: Number(opts.fps),
+      area: opts.area,
+      temporary: !opts.keep,
+      filename: opts.output ? pathMod.basename(opts.output) : undefined,
+      outputDir: opts.dir || (opts.output ? pathMod.dirname(opts.output) : undefined),
+    });
+    console.log(result.path);
+    console.error(`backend=${result.backend} duration=${result.durationSec}s fps=${result.fps}`);
+    const n = Number(opts.frames);
+    if (n > 0) {
+      const { framePaths } = await extractFrames(result.path, { maxFrames: n });
+      framePaths.forEach((p) => console.log(p));
+    }
+  });
+
+program
+  .command("videos")
+  .description("List recent screen recordings")
+  .option("-n, --limit <n>", "Max results", "20")
+  .action(async (opts) => {
+    const { listVideos } = await import("../src/video.js");
+    const videos = await listVideos({ limit: Number(opts.limit) });
+    videos.forEach((v) => {
+      console.log(
+        `${new Date(v.mtime).toISOString().slice(0, 19)}  ${(v.size / 1024).toFixed(1)}K  ${v.temporary ? "tmp" : "keep"}  ${v.path}`
+      );
+    });
+  });
+
+program
+  .command("cleanup-videos")
+  .description("Delete temporary (or all) screen recordings")
+  .option("--all", "Delete all videos, not just tmp/")
+  .option("--older-than <minutes>", "Only delete older than N minutes", "0")
+  .action(async (opts) => {
+    const { cleanupVideos } = await import("../src/video.js");
+    const result = await cleanupVideos({
+      all: !!opts.all,
+      olderThanMs: Number(opts.olderThan) > 0 ? Number(opts.olderThan) * 60_000 : 0,
+    });
+    console.log(`Removed ${result.removed} video file(s).`);
   });
 
 program.parse();
