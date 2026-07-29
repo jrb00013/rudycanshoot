@@ -54,20 +54,23 @@ need python3
 [[ -f package.json ]] || die "run from repo root (package.json missing)"
 git rev-parse --is-inside-work-tree >/dev/null || die "not a git repo"
 
-# Prefer a real Node install over Cursor Agent's npm (wrong global prefix / broken publishes).
-if [[ -x "$HOME/.nvm/versions/node/$(ls "$HOME/.nvm/versions/node" 2>/dev/null | tail -1)/bin/npm" ]]; then
-  NVM_NODE="$(ls -1 "$HOME/.nvm/versions/node" | tail -1)"
-  export PATH="$HOME/.nvm/versions/node/$NVM_NODE/bin:$PATH"
-fi
-hash -r
-export NPM_CONFIG_PREFIX="$(npm config get prefix 2>/dev/null | grep -v cursor-agent || true)"
-if [[ -z "${NPM_CONFIG_PREFIX:-}" ]] || [[ "${NPM_CONFIG_PREFIX}" == *cursor-agent* ]]; then
-  if [[ -d "$HOME/.nvm/versions/node" ]]; then
-    NVM_NODE="$(ls -1 "$HOME/.nvm/versions/node" | tail -1)"
-    export NPM_CONFIG_PREFIX="$HOME/.nvm/versions/node/$NVM_NODE"
-    export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
+# Prefer Node 22+ from nvm, but never Cursor Agent's npm (wrong prefix / broken publishes).
+if [[ -d "$HOME/.nvm/versions/node" ]]; then
+  # Prefer latest v22.* if present, else highest version that is not only agent-bundled.
+  NVM_NODE=""
+  if ls -d "$HOME/.nvm/versions/node"/v22.* >/dev/null 2>&1; then
+    NVM_NODE="$(ls -1d "$HOME/.nvm/versions/node"/v22.* | sort -V | tail -1 | xargs basename)"
+  else
+    NVM_NODE="$(ls -1 "$HOME/.nvm/versions/node" | sort -V | tail -1)"
   fi
+  export PATH="$HOME/.nvm/versions/node/$NVM_NODE/bin:/usr/bin:/bin"
+  export NPM_CONFIG_PREFIX="$HOME/.nvm/versions/node/$NVM_NODE"
+  hash -r
 fi
+# Strip cursor-agent from PATH if it sneaks back in
+PATH="$(echo "$PATH" | tr ':' '\n' | grep -v cursor-agent | paste -sd: -)"
+export PATH
+hash -r
 
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 [[ "$BRANCH" == "main" || "$BRANCH" == "master" ]] || die "publish from main/master (on $BRANCH)"
