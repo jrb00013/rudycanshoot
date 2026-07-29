@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-07-29
+
+### Changed
+- Published to npm: [`rudycanshoot`](https://www.npmjs.com/package/rudycanshoot)
+- Author contact email updated to `jrb00013wvu@gmail.com`
+- Package metadata: correct GitHub homepage/repository, `files` whitelist for npm publish
+
 ### Fixed
 - MCP failed to load when `node_modules` was missing; install now wires absolute local paths into Cursor (`rudycanshoot` + legacy `screenshot-mcp`)
 - WSL hosts without Linux screenshot tools now fall back to Windows PowerShell desktop capture
