@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.1.9] - 2026-07-29
+
+### Changed
+- Republish silent Linux screenshot/video capture (1.1.8 CDN tarball missing)
+
 ## [1.1.8] - 2026-07-29
 
 ### Changed
