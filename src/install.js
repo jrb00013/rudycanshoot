@@ -6,34 +6,25 @@ import { execSync } from "node:child_process";
 
 const HOME = homedir();
 const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const LOCAL_BIN = join(PKG_ROOT, "bin", "rudycanshoot.js");
-const LOCAL_BIN_LEGACY = join(PKG_ROOT, "bin", "screenshot-mcp.js");
+
+function which(cmd) {
+  try {
+    return execSync(`command -v ${cmd}`, { encoding: "utf8" }).trim() || null;
+  } catch {
+    return null;
+  }
+}
 
 function resolveServerCmd() {
-  // Prefer this checkout / local install with an absolute path so MCP
-  // clients do not depend on cwd or a global npm link.
-  const local = existsSync(LOCAL_BIN)
-    ? LOCAL_BIN
-    : existsSync(LOCAL_BIN_LEGACY)
-      ? LOCAL_BIN_LEGACY
-      : null;
-  if (local && existsSync(join(PKG_ROOT, "node_modules", "@modelcontextprotocol", "sdk"))) {
-    // Prefer a stable `node` on PATH over a versioned Cursor Agent binary.
-    let nodeCmd = process.execPath;
-    try {
-      const whichNode = execSync("command -v node", { encoding: "utf8" }).trim();
-      if (whichNode) nodeCmd = whichNode;
-    } catch {}
-    return { command: nodeCmd, args: [local, "serve"] };
+  // Portable entry only — never hardcode absolute machine paths into MCP configs.
+  // Prefer a global install on PATH; otherwise npx from the registry.
+  if (which("rudycanshoot")) {
+    return { command: "rudycanshoot", args: ["serve"] };
   }
-  try {
-    const npmBin = execSync("npm root -g", { encoding: "utf8" }).trim();
-    for (const name of ["rudycanshoot", "screenshot-mcp"]) {
-      const pkg = join(dirname(npmBin), "bin", name);
-      if (existsSync(pkg)) return { command: pkg, args: ["serve"] };
-    }
-  } catch {}
-  return { command: "npx", args: ["rudycanshoot", "serve"] };
+  if (which("screenshot-mcp")) {
+    return { command: "screenshot-mcp", args: ["serve"] };
+  }
+  return { command: "npx", args: ["-y", "rudycanshoot", "serve"] };
 }
 
 function readJson(path, fallback = {}) {

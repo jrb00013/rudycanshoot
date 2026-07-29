@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- MCP configs and `install` no longer hardcode absolute machine paths; use `rudycanshoot` on PATH or `npx -y rudycanshoot serve`
+
 ## [1.1.1] - 2026-07-29
 
 ### Changed

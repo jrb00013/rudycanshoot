@@ -2,8 +2,8 @@
   "mcpServers": [
     {
       "name": "rudycanshoot",
-      "command": "node",
-      "args": ["bin/rudycanshoot.js", "serve"]
+      "command": "npx",
+      "args": ["-y", "rudycanshoot", "serve"]
     }
   ]
 }

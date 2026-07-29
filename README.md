@@ -11,7 +11,7 @@ npm install -g rudycanshoot
 Or run without installing:
 
 ```bash
-npx rudycanshoot serve
+npx -y rudycanshoot serve
 ```
 
 ## Quick Start

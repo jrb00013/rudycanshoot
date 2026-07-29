@@ -1,11 +1,8 @@
 {
   "mcpServers": {
     "rudycanshoot": {
-      "command": "/usr/bin/node",
-      "args": [
-        "/home/josep/projects/rudycanshoot/bin/rudycanshoot.js",
-        "serve"
-      ]
+      "command": "npx",
+      "args": ["-y", "rudycanshoot", "serve"]
     }
   }
 }
