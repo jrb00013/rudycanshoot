@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.1.6] - 2026-07-29
+
+### Changed
+- Add automated publish script (scripts/publish.sh)
+
 ## [1.1.5] - 2026-07-29
 
 ### Fixed
