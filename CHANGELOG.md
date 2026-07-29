@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-07-29
+
+### Fixed
+- Linux screen recordings encoded as `yuv444p` appeared black in VLC/thumbnails; now use `libx264` + `yuv420p` for playable MP4s
+
 ## [1.1.2] - 2026-07-29
 
 ### Fixed

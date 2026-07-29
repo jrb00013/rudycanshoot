@@ -281,13 +281,37 @@ async function tryNativeRecord(outputPath, { durationSec, fps, area }) {
   }
 
   if (os === "linux" && process.env.DISPLAY && !process.env.WAYLAND_DISPLAY) {
-    const args = ["-y", "-video_size", await detectX11Size(), "-framerate", String(fps)];
+    const display = process.env.DISPLAY || ":0";
+    const size = await detectX11Size();
+    const args = [
+      "-y",
+      "-video_size",
+      size,
+      "-framerate",
+      String(fps),
+      "-f",
+      "x11grab",
+    ];
     if (area) {
       const [x, y, w, h] = area.split(",").map(Number);
-      args.push("-f", "x11grab", "-i", `${process.env.DISPLAY || ":0"}+${x},${y}`, "-t", String(durationSec), "-s", `${w}x${h}`, outputPath);
+      args.push("-i", `${display}+${x},${y}`, "-t", String(durationSec), "-s", `${w}x${h}`);
     } else {
-      args.push("-f", "x11grab", "-i", process.env.DISPLAY || ":0", "-t", String(durationSec), outputPath);
+      args.push("-i", display, "-t", String(durationSec));
     }
+    // yuv420p + libx264 is required for VLC/browser/thumbnail playback (yuv444p looks black).
+    args.push(
+      "-vf",
+      "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+      "-c:v",
+      "libx264",
+      "-pix_fmt",
+      "yuv420p",
+      "-preset",
+      "veryfast",
+      "-movflags",
+      "+faststart",
+      outputPath
+    );
     try {
       await execFileAsync(ffmpeg, args, { timeout: (durationSec + 15) * 1000 });
       return "ffmpeg-x11grab";
