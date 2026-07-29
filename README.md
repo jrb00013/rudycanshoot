@@ -126,6 +126,18 @@ Tried in order when available:
 | `ffmpeg` x11grab | X11 | same encoder already used for video |
 | WSL → PowerShell | — | Windows host desktop when Linux tools are missing |
 
+### Video (Linux)
+
+Same rule: **silent only** (no portal ScreenCast prompts).
+
+| Backend | When |
+|---------|------|
+| `ffmpeg` x11grab | `DISPLAY` available (X11 / XWayland) |
+| `wf-recorder` | Wayland, if installed |
+| screenshot frames → MP4/GIF | fallback using the silent screenshot chain |
+
+macOS/Windows video uses ffmpeg `avfoundation` / `gdigrab`.
+
 ### macOS
 
 Uses the built-in `screencapture` command — no extra install needed.

@@ -39,3 +39,5 @@ Silent tools only (no portal permission popups):
 5. WSL → Windows PowerShell (fallback)
 
 Install optional: `sudo apt install scrot` or `sudo apt install grim` (Wayland). `xwd` + `ffmpeg` often already enough on X11.
+
+Video (silent only): `ffmpeg` x11grab → `wf-recorder` → screenshot-frame encode. Never portal ScreenCast.

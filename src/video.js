@@ -266,65 +266,86 @@ export async function recordVideo(opts = {}) {
 async function tryNativeRecord(outputPath, { durationSec, fps, area }) {
   const os = platform();
 
-  if (os === "linux" && process.env.WAYLAND_DISPLAY && which("wf-recorder")) {
-    const args = ["-f", outputPath];
-    if (area) {
-      const [x, y, w, h] = area.split(",").map(Number);
-      args.push("-g", `${x},${y} ${w}x${h}`);
-    }
-    await runTimed("wf-recorder", args, durationSec * 1000 + 500);
-    return "wf-recorder";
-  }
+  // Silent backends only — never xdg-desktop-portal ScreenCast (permission popups).
 
   let ffmpeg;
   try {
     ffmpeg = await resolveFfmpeg();
   } catch {
+    ffmpeg = null;
+  }
+
+  if (os === "linux") {
+    const display = process.env.DISPLAY?.trim() || null;
+    const wayland = process.env.WAYLAND_DISPLAY?.trim() || null;
+
+    // Prefer ffmpeg x11grab whenever DISPLAY works (pure X11 or XWayland) — no prompts.
+    if (ffmpeg && display) {
+      const size = area
+        ? null
+        : await detectX11Size();
+      const args = ["-y", "-framerate", String(fps), "-f", "x11grab"];
+      if (area) {
+        const [x, y, w, h] = area.split(",").map(Number);
+        args.push(
+          "-video_size",
+          `${w}x${h}`,
+          "-i",
+          `${display}+${x},${y}`,
+          "-t",
+          String(durationSec)
+        );
+      } else {
+        args.push("-video_size", size, "-i", display, "-t", String(durationSec));
+      }
+      // yuv420p + libx264 required for VLC/browser playback (yuv444p looks black).
+      args.push(
+        "-vf",
+        "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-preset",
+        "veryfast",
+        "-movflags",
+        "+faststart",
+        outputPath
+      );
+      try {
+        await execFileAsync(ffmpeg, args, {
+          timeout: (durationSec + 15) * 1000,
+          env: process.env,
+        });
+        if (existsSync(outputPath) && statSync(outputPath).size > 0) {
+          return "ffmpeg-x11grab";
+        }
+      } catch {
+        // fall through to Wayland / frames
+      }
+    }
+
+    // Wayland compositor recorder (no portal UI).
+    if (wayland && which("wf-recorder")) {
+      const args = ["-f", outputPath];
+      if (area) {
+        const [x, y, w, h] = area.split(",").map(Number);
+        args.push("-g", `${x},${y} ${w}x${h}`);
+      }
+      try {
+        await runTimed("wf-recorder", args, durationSec * 1000 + 500);
+        if (existsSync(outputPath) && statSync(outputPath).size > 0) {
+          return "wf-recorder";
+        }
+      } catch {
+        // fall through to frame sampling
+      }
+    }
+
     return null;
   }
 
-  if (os === "linux" && process.env.DISPLAY?.trim() && !process.env.WAYLAND_DISPLAY?.trim()) {
-    const display = process.env.DISPLAY.trim();
-    const size = await detectX11Size();
-    const args = [
-      "-y",
-      "-video_size",
-      size,
-      "-framerate",
-      String(fps),
-      "-f",
-      "x11grab",
-    ];
-    if (area) {
-      const [x, y, w, h] = area.split(",").map(Number);
-      args.push("-i", `${display}+${x},${y}`, "-t", String(durationSec), "-s", `${w}x${h}`);
-    } else {
-      args.push("-i", display, "-t", String(durationSec));
-    }
-    // yuv420p + libx264 is required for VLC/browser/thumbnail playback (yuv444p looks black).
-    args.push(
-      "-vf",
-      "scale=trunc(iw/2)*2:trunc(ih/2)*2",
-      "-c:v",
-      "libx264",
-      "-pix_fmt",
-      "yuv420p",
-      "-preset",
-      "veryfast",
-      "-movflags",
-      "+faststart",
-      outputPath
-    );
-    try {
-      await execFileAsync(ffmpeg, args, {
-        timeout: (durationSec + 15) * 1000,
-        env: process.env,
-      });
-      return "ffmpeg-x11grab";
-    } catch {
-      return null;
-    }
-  }
+  if (!ffmpeg) return null;
 
   if (os === "darwin") {
     // avfoundation screen capture device index 1 is typical for screen; keep conservative.
@@ -343,6 +364,8 @@ async function tryNativeRecord(outputPath, { durationSec, fps, area }) {
           String(durationSec),
           "-pix_fmt",
           "yuv420p",
+          "-movflags",
+          "+faststart",
           outputPath,
         ],
         { timeout: (durationSec + 15) * 1000 }
@@ -369,6 +392,8 @@ async function tryNativeRecord(outputPath, { durationSec, fps, area }) {
           String(durationSec),
           "-pix_fmt",
           "yuv420p",
+          "-movflags",
+          "+faststart",
           outputPath,
         ],
         { timeout: (durationSec + 15) * 1000 }
