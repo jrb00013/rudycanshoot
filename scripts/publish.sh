@@ -144,12 +144,13 @@ git add package.json package-lock.json CHANGELOG.md
 git commit -m "chore(release): publish v${VERSION}"
 git push
 
-echo "→ npm pack + publish tarball"
+echo "→ npm publish (directory) + pack for GitHub asset"
+# Directory publish is more reliable on the npm CDN than `npm publish ./file.tgz`.
+npm publish --access public
 rm -f "rudycanshoot-${VERSION}.tgz"
 npm pack >/dev/null
 PACK_TGZ="rudycanshoot-${VERSION}.tgz"
 [[ -f "$PACK_TGZ" ]] || die "npm pack did not produce $PACK_TGZ"
-npm publish "./$PACK_TGZ" --access public
 
 echo "→ check registry tarball (non-fatal)"
 TARBALL_URL="https://registry.npmjs.org/rudycanshoot/-/rudycanshoot-${VERSION}.tgz"
