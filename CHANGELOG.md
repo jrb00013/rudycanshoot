@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-07-29
+
+### Fixed
+- Republish after npm CDN missed 1.2.0/1.1.8/1.1.9 tarballs
+
 ## [1.2.0] - 2026-07-29
 
 ### Changed
