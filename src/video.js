@@ -17,6 +17,7 @@ import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { takeScreenshot } from "./screenshot.js";
 import { makeGif } from "./gif.js";
+import { ensureDisplayEnv } from "./display.js";
 
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
@@ -175,6 +176,8 @@ export async function recordVideo(opts = {}) {
   const outputPath = resolve(join(outputDir, filename));
   const area = opts.area || null;
 
+  if (platform() === "linux") ensureDisplayEnv();
+
   // Prefer native continuous recorders when available.
   const native = await tryNativeRecord(outputPath, { durationSec, fps, area });
   if (native) {
@@ -280,8 +283,8 @@ async function tryNativeRecord(outputPath, { durationSec, fps, area }) {
     return null;
   }
 
-  if (os === "linux" && process.env.DISPLAY && !process.env.WAYLAND_DISPLAY) {
-    const display = process.env.DISPLAY || ":0";
+  if (os === "linux" && process.env.DISPLAY?.trim() && !process.env.WAYLAND_DISPLAY?.trim()) {
+    const display = process.env.DISPLAY.trim();
     const size = await detectX11Size();
     const args = [
       "-y",
@@ -313,7 +316,10 @@ async function tryNativeRecord(outputPath, { durationSec, fps, area }) {
       outputPath
     );
     try {
-      await execFileAsync(ffmpeg, args, { timeout: (durationSec + 15) * 1000 });
+      await execFileAsync(ffmpeg, args, {
+        timeout: (durationSec + 15) * 1000,
+        env: process.env,
+      });
       return "ffmpeg-x11grab";
     } catch {
       return null;

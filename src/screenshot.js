@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import { existsSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { homedir, platform } from "node:os";
+import { ensureDisplayEnv } from "./display.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -213,6 +214,8 @@ export async function takeScreenshot(opts = {}) {
 
   const outputPath = resolve(join(outputDir, filename));
   const os = platform();
+
+  if (os === "linux") ensureDisplayEnv();
 
   if (os === "darwin") {
     await captureMac(outputPath, { window: windowMode, area });

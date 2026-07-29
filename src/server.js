@@ -7,9 +7,13 @@ import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { takeScreenshot, defaultOutputDir } from "./screenshot.js";
+import { ensureDisplayEnv } from "./display.js";
 
 const execFileAsync = promisify(execFile);
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// MCP hosts often omit DISPLAY; resolve it before any tool runs.
+ensureDisplayEnv();
 
 const server = new McpServer({
   name: "rudycanshoot",

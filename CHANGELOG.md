@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-07-29
+
+### Fixed
+- MCP server often starts with no `DISPLAY`; now auto-detects the active X11/Wayland session (and `XAUTHORITY`) so `take_screenshot` / `record_video` work when launched by Cursor/Claude
+
 ## [1.1.3] - 2026-07-29
 
 ### Fixed
