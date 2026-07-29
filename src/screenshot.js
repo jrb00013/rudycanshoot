@@ -113,17 +113,19 @@ $bmp.Dispose()
 async function captureLinux(outputPath, opts = {}) {
   const { window: windowMode = false, area = null } = opts;
 
-  if (process.env.WAYLAND_DISPLAY) {
+  // Prefer silent tools only — never xdg-desktop-portal / interactive pickers
+  // (those pop permission dialogs, which break headless MCP use).
+
+  if (process.env.WAYLAND_DISPLAY?.trim()) {
     if (which("grim")) {
       const args = [outputPath];
       if (area) args.unshift("-g", area);
       await execFileAsync("grim", args);
       return;
     }
-    if (which("gnome-screenshot")) {
-      const args = ["-f", outputPath];
-      if (area) args.push("-a");
-      await execFileAsync("gnome-screenshot", args);
+    // gnome-screenshot on Wayland can flash UI; only use non-interactive -f path.
+    if (which("gnome-screenshot") && !windowMode && !area) {
+      await execFileAsync("gnome-screenshot", ["-f", outputPath]);
       return;
     }
   }
@@ -144,6 +146,10 @@ async function captureLinux(outputPath, opts = {}) {
         args.push("-i", stdout.trim());
       } catch {}
     }
+    if (area) {
+      const [x, y, w, h] = area.split(",").map(Number);
+      args.push("-g", `${w}x${h}+${x}+${y}`);
+    }
     await execFileAsync("maim", args);
     return;
   }
@@ -153,17 +159,25 @@ async function captureLinux(outputPath, opts = {}) {
     return;
   }
 
-  if (which("xwd") && which("convert")) {
-    const xwdPath = outputPath.replace(/\.png$/, ".xwd");
+  // X11 built-ins: xwd (x11-apps) + ffmpeg convert — no ImageMagick required.
+  // Same idea as macOS screencapture / Windows PowerShell: use what's already there.
+  if (process.env.DISPLAY?.trim() && which("xwd")) {
+    const xwdPath = outputPath.replace(/\.png$/i, ".xwd");
     await execFileAsync("xwd", ["-root", "-silent", "-out", xwdPath]);
-    await execFileAsync("convert", [xwdPath, outputPath]);
-    return;
+    if (await convertXwdToPng(xwdPath, outputPath)) {
+      try {
+        const { unlinkSync } = await import("node:fs");
+        unlinkSync(xwdPath);
+      } catch {}
+      return;
+    }
+    // Leave .xwd if we couldn't convert
+    return xwdPath;
   }
 
-  if (which("xwd")) {
-    const xwdPath = outputPath.replace(/\.png$/, ".xwd");
-    await execFileAsync("xwd", ["-root", "-silent", "-out", xwdPath]);
-    return xwdPath;
+  // Silent single-frame grab via ffmpeg x11grab (already used for video recording).
+  if (process.env.DISPLAY?.trim() && (await captureViaFfmpegX11(outputPath, { area }))) {
+    return;
   }
 
   // WSL fallback: capture the Windows host desktop.
@@ -172,10 +186,83 @@ async function captureLinux(outputPath, opts = {}) {
   }
 
   throw new Error(
-    "No screenshot tool found. Install one of: scrot, maim, grim (Wayland), gnome-screenshot, or ImageMagick. " +
-    "On WSL, powershell.exe desktop capture is used when available. " +
-    "For CI/headless, use rudycanshoot capture_command instead."
+    "No silent screenshot backend found. On Linux install one of: scrot, maim, grim (Wayland), " +
+      "x11-apps (xwd), or ffmpeg. rudycanshoot never uses permission-prompt portals. " +
+      "On WSL, powershell.exe desktop capture is used when available. " +
+      "For CI/headless, use rudycanshoot capture_command instead."
   );
+}
+
+async function convertXwdToPng(xwdPath, pngPath) {
+  if (which("convert")) {
+    try {
+      await execFileAsync("convert", [xwdPath, pngPath]);
+      return existsSync(pngPath);
+    } catch {}
+  }
+  if (which("ffmpeg") || existsSync("/usr/bin/ffmpeg")) {
+    const ffmpeg = which("ffmpeg") ? "ffmpeg" : "/usr/bin/ffmpeg";
+    try {
+      await execFileAsync(
+        ffmpeg,
+        ["-y", "-i", xwdPath, "-frames:v", "1", "-update", "1", pngPath],
+        { timeout: 30_000 }
+      );
+      return existsSync(pngPath);
+    } catch {}
+  }
+  return false;
+}
+
+async function captureViaFfmpegX11(outputPath, opts = {}) {
+  const ffmpegBin = which("ffmpeg") ? "ffmpeg" : existsSync("/usr/bin/ffmpeg") ? "/usr/bin/ffmpeg" : null;
+  if (!ffmpegBin) return false;
+  const display = process.env.DISPLAY.trim();
+  const { area = null } = opts;
+  const args = ["-y"];
+  if (area) {
+    const [x, y, w, h] = area.split(",").map(Number);
+    args.push(
+      "-video_size",
+      `${w}x${h}`,
+      "-f",
+      "x11grab",
+      "-i",
+      `${display}+${x},${y}`,
+      "-frames:v",
+      "1",
+      "-update",
+      "1",
+      outputPath
+    );
+  } else {
+    // Probe size via xdpyinfo when available
+    let size = "1920x1080";
+    try {
+      const { stdout } = await execFileAsync("xdpyinfo", []);
+      const m = stdout.match(/dimensions:\s+(\d+x\d+)/);
+      if (m) size = m[1];
+    } catch {}
+    args.push(
+      "-video_size",
+      size,
+      "-f",
+      "x11grab",
+      "-i",
+      display,
+      "-frames:v",
+      "1",
+      "-update",
+      "1",
+      outputPath
+    );
+  }
+  try {
+    await execFileAsync(ffmpegBin, args, { timeout: 15_000, env: process.env });
+    return existsSync(outputPath);
+  } catch {
+    return false;
+  }
 }
 
 async function captureMac(outputPath, opts = {}) {

@@ -113,15 +113,18 @@ rudycanshoot install --all
 
 ### Linux
 
-Installed automatically when available, in priority order:
+Unlike macOS/Windows, Linux has no single built-in `screencapture` binary. rudycanshoot uses **silent** backends only (no permission popups — xdg-desktop-portal is intentionally skipped).
 
-| Tool | Display | Install |
-|------|---------|---------|
+Tried in order when available:
+
+| Tool | Display | Notes |
+|------|---------|-------|
 | `grim` | Wayland | `sudo apt install grim` |
-| `scrot` | X11 | `sudo apt install scrot` |
-| `maim` | X11 | `sudo apt install maim` |
-| `import` | X11 | `sudo apt install imagemagick` |
-| `xwd` | X11 | `sudo apt install x11-apps` |
+| `gnome-screenshot` | Wayland | only non-interactive `-f` |
+| `scrot` / `maim` / `import` | X11 | optional packages |
+| `xwd` + `ffmpeg` | X11 | X11 built-in dump → PNG (no ImageMagick needed) |
+| `ffmpeg` x11grab | X11 | same encoder already used for video |
+| WSL → PowerShell | — | Windows host desktop when Linux tools are missing |
 
 ### macOS
 

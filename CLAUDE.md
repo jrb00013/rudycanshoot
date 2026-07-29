@@ -30,10 +30,12 @@ node bin/rudycanshoot.js install --all  # configure all AI tools
 
 ## Screenshot Backends (Linux, in priority order)
 
-1. `grim` (Wayland)
-2. `scrot` (X11)
-3. `maim` (X11)
-4. `import` (ImageMagick, X11)
-5. `xwd` + `convert` (X11, fallback)
+Silent tools only (no portal permission popups):
 
-Install one: `sudo apt install scrot` or `sudo apt install grim` (Wayland)
+1. `grim` (Wayland)
+2. `scrot` / `maim` / `import` (X11)
+3. `xwd` + `ffmpeg` → PNG (X11 built-in path)
+4. `ffmpeg` x11grab single frame
+5. WSL → Windows PowerShell (fallback)
+
+Install optional: `sudo apt install scrot` or `sudo apt install grim` (Wayland). `xwd` + `ffmpeg` often already enough on X11.
