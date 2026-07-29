@@ -8,7 +8,7 @@
 
 ## Reporting a Vulnerability
 
-Please report security issues to joseph.black@lighthouseavionics.com rather than opening a public issue.
+Please report security issues to jrb00013wvu@gmail.com rather than opening a public issue.
 
 ## Notes
 
