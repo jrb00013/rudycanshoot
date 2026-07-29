@@ -141,26 +141,29 @@ git add package.json package-lock.json CHANGELOG.md
 git commit -m "chore(release): publish v${VERSION}"
 git push
 
-echo "→ npm publish"
-npm publish --access public
+echo "→ npm pack + publish tarball"
+rm -f "rudycanshoot-${VERSION}.tgz"
+npm pack >/dev/null
+PACK_TGZ="rudycanshoot-${VERSION}.tgz"
+[[ -f "$PACK_TGZ" ]] || die "npm pack did not produce $PACK_TGZ"
+npm publish "./$PACK_TGZ" --access public
 
-echo "→ wait for registry tarball"
+echo "→ check registry tarball (non-fatal)"
 TARBALL_URL="https://registry.npmjs.org/rudycanshoot/-/rudycanshoot-${VERSION}.tgz"
-for i in $(seq 1 30); do
+CDN_OK=0
+for i in $(seq 1 15); do
   code="$(curl -sS -o /dev/null -w '%{http_code}' "$TARBALL_URL" || true)"
   if [[ "$code" == "200" ]]; then
-    echo "tarball ready ($code)"
+    echo "tarball ready on CDN ($code)"
+    CDN_OK=1
     break
   fi
   echo "  attempt $i: HTTP $code — retrying…"
   sleep 2
-  if [[ "$i" -eq 30 ]]; then
-    die "npm tarball not available after publish: $TARBALL_URL"
-  fi
 done
-
-TMP_TGZ="$(mktemp /tmp/rudycanshoot-${VERSION}-XXXX.tgz)"
-curl -fsSL -o "$TMP_TGZ" "$TARBALL_URL"
+if [[ "$CDN_OK" -ne 1 ]]; then
+  echo "warning: CDN still 404 for $TARBALL_URL — GitHub release will use local pack" >&2
+fi
 
 NOTES="$(python3 - "$VERSION" "${MESSAGES[@]}" <<'PY'
 import sys
@@ -185,19 +188,26 @@ print("\n".join(lines))
 PY
 )"
 
+# Rename pack to a stable asset name for the release
+RELEASE_TGZ="$(mktemp -d)/rudycanshoot-${VERSION}.tgz"
+cp "$PACK_TGZ" "$RELEASE_TGZ"
+
 echo "→ GitHub release $TAG"
 if gh release view "$TAG" >/dev/null 2>&1; then
   echo "release $TAG exists — uploading tarball"
-  gh release upload "$TAG" "$TMP_TGZ" --clobber
+  gh release upload "$TAG" "$RELEASE_TGZ" --clobber
 else
-  gh release create "$TAG" "$TMP_TGZ" \
+  gh release create "$TAG" "$RELEASE_TGZ" \
     --title "rudycanshoot $TAG" \
     --target "$(git rev-parse HEAD)" \
     --notes "$NOTES"
 fi
-rm -f "$TMP_TGZ"
+rm -f "$PACK_TGZ" "$RELEASE_TGZ"
 
 echo
 echo "published rudycanshoot@${VERSION}"
 echo "  npm:     https://www.npmjs.com/package/rudycanshoot"
 echo "  release: https://github.com/jrb00013/rudycanshoot/releases/tag/${TAG}"
+if [[ "$CDN_OK" -ne 1 ]]; then
+  echo "  warning: verify install with: npm install -g rudycanshoot@${VERSION}" >&2
+fi
