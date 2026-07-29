@@ -50,7 +50,10 @@
     "install-tools": "node bin/rudycanshoot.js install --all",
     "test": "node --test tests/*.test.js",
     "lint": "node --check src/*.js bin/*.js 2>&1 || true",
-    "prepublishOnly": "node --check bin/rudycanshoot.js && node --check src/server.js"
+    "prepublishOnly": "node --check bin/rudycanshoot.js && node --check src/server.js",
+    "release": "bash scripts/publish.sh",
+    "release:patch": "bash scripts/publish.sh patch",
+    "release:minor": "bash scripts/publish.sh minor"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
