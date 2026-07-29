@@ -1,6 +1,6 @@
 {
   "name": "rudycanshoot",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "Screenshot tool with MCP server — lets AI assistants capture screens, windows, and terminals. Auto-installs into Claude Code, Cursor, Windsurf, Codex, Gemini CLI, OpenCode, and more.",
   "keywords": [
     "mcp",

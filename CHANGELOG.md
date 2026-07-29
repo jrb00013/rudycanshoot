@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.1.7] - 2026-07-29
+
+### Changed
+- Publish via npm pack + publish tarball so the registry blob is uploaded
+- GitHub release always attaches the local pack
+
 ## [1.1.6] - 2026-07-29
 
 ### Changed
