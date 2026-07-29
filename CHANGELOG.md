@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-07-29
+
+### Fixed
+- Ensure npm tarball publishes correctly (1.1.4 metadata existed but tarball 404'd on the CDN)
+
 ## [1.1.4] - 2026-07-29
 
 ### Fixed
