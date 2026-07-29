@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [1.1.8] - 2026-07-29
+
+### Changed
+- Linux silent capture: xwd+ffmpeg PNG, no portal prompts
+- Silent video via ffmpeg x11grab / wf-recorder (no ScreenCast UI)
+
 ## [1.1.7] - 2026-07-29
 
 ### Changed
