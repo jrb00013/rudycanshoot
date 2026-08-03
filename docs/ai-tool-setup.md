@@ -77,9 +77,12 @@ Also reads `GEMINI.md` from the current directory (included in this repo).
 **Config:** `~/.config/opencode/opencode.json`
 ```json
 {
+  "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "servers": {
-      "rudycanshoot": { "command": "rudycanshoot", "args": ["serve"] }
+    "rudycanshoot": {
+      "type": "local",
+      "command": ["rudycanshoot", "serve"],
+      "enabled": true
     }
   }
 }

@@ -159,11 +159,25 @@ Use these tools whenever asked to take a screenshot, record the screen, or inspe
   },
 
   opencode: () => {
+    // OpenCode expects servers directly under mcp, with type + command array
+    // (not Claude/Cursor-style mcp.servers + command/args).
+    // Docs: https://opencode.ai/docs/mcp-servers/
     const configPath = join(HOME, ".config", "opencode", "opencode.json");
     const config = readJson(configPath);
     config.mcp = config.mcp || {};
-    config.mcp.servers = config.mcp.servers || {};
-    config.mcp.servers["rudycanshoot"] = MCP_ENTRY;
+    // Migrate legacy mcp.servers shape if present
+    if (config.mcp.servers && typeof config.mcp.servers === "object") {
+      for (const [name, entry] of Object.entries(config.mcp.servers)) {
+        if (!config.mcp[name]) config.mcp[name] = entry;
+      }
+      delete config.mcp.servers;
+    }
+    config.mcp["rudycanshoot"] = {
+      type: "local",
+      command: [command, ...args],
+      enabled: true,
+    };
+    if (!config.$schema) config.$schema = "https://opencode.ai/config.json";
     writeJson(configPath, config);
 
     const agentDir = join(HOME, ".config", "opencode", "agents");
