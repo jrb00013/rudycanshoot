@@ -51,6 +51,7 @@ Ask your AI: *"Take a screenshot and show me what's on screen."*
 | `read_screenshot` | Read a saved image so the AI can view it |
 | `list_screenshots` | List recent captures |
 | `record_video` | Record a temporary screen video; returns frames the AI can watch |
+| `record_terminal` | Record a TERMINAL SESSION (a running command) as a GIF — no desktop, works headless |
 | `read_video` | Extract frames from a saved video for visual review |
 | `list_videos` | List recent recordings |
 | `cleanup_videos` | Delete temporary (or all) recordings |

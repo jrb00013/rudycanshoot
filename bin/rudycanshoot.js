@@ -192,6 +192,32 @@ program
   });
 
 program
+  .command("record-terminal <command...>")
+  .description("Record a TERMINAL SESSION running <command> as a GIF (no desktop, works headless)")
+  .option("-o, --output <path>", "Output .gif path")
+  .option("--font-size <n>", "Font size", "15")
+  .option("--sample-ms <ms>", "Snapshot cadence in ms", "400")
+  .option("--idle-cap-ms <ms>", "Cap long unchanged stretches (e.g. a load) to this ms", "1500")
+  .option("--rows <n>", "Visible terminal rows (tail)", "32")
+  .option("--cols <n>", "Visible terminal columns", "110")
+  .option("--keep", "Store in videos/ instead of videos/tmp/")
+  .action(async (commandParts, opts) => {
+    const { recordTerminalSession } = await import("../src/terminal_record.js");
+    const command = commandParts.join(" ");
+    const result = await recordTerminalSession(command, {
+      output: opts.output,
+      fontSize: Number(opts.fontSize),
+      sampleMs: Number(opts.sampleMs),
+      idleCapMs: Number(opts.idleCapMs),
+      rows: Number(opts.rows),
+      cols: Number(opts.cols),
+      temporary: !opts.keep,
+    });
+    console.log(result.path);
+    console.error(`frames=${result.frames} duration=${(result.durationMs / 1000).toFixed(1)}s`);
+  });
+
+program
   .command("videos")
   .description("List recent screen recordings")
   .option("-n, --limit <n>", "Max results", "20")

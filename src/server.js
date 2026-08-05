@@ -17,7 +17,7 @@ ensureDisplayEnv();
 
 const server = new McpServer({
   name: "rudycanshoot",
-  version: "1.1.0",
+  version: "1.3.0",
 });
 
 server.tool(
@@ -364,6 +364,58 @@ server.tool(
           data: fr.base64,
           mimeType: fr.mimeType,
         });
+      }
+      await cleanupFrameDir(viewed.outputDir);
+    }
+
+    return { content };
+  }
+);
+
+// record_terminal — record a TERMINAL SESSION (a running command) as a GIF, not the desktop.
+server.tool(
+  "record_terminal",
+  "Record a TERMINAL SESSION: run a shell command and capture its terminal output over time as a GIF. Unlike record_video (which screen-captures the whole desktop, including private windows), this records ONLY the terminal — no desktop, no private info — and works headless (WSL, SSH, CI). Ideal for demoing CLI programs.",
+  {
+    command: z.string().describe("Shell command to run and record (e.g. './demo.sh')"),
+    output: z.string().optional().describe("Output .gif path (default: ~/.rudycanshoot/videos/tmp/)"),
+    fontSize: z.number().int().min(8).max(40).default(15).describe("Font size"),
+    sampleMs: z.number().int().min(100).max(2000).default(400).describe("Snapshot cadence (ms)"),
+    idleCapMs: z.number().int().min(200).max(10000).default(1500).describe("Cap long unchanged stretches (e.g. a model load) to this many ms so the GIF stays short"),
+    rows: z.number().int().min(4).max(80).default(32).describe("Visible terminal rows (tail window)"),
+    cols: z.number().int().min(20).max(240).default(110).describe("Visible terminal columns"),
+    keep: z.boolean().default(false).describe("Store in videos/ instead of videos/tmp/"),
+    returnFrames: z.boolean().default(true).describe("Return sampled frames as images for AI review"),
+    maxFrames: z.number().int().min(1).max(30).default(10).describe("Max frames returned when returnFrames=true"),
+  },
+  async ({ command, output, fontSize, sampleMs, idleCapMs, rows, cols, keep, returnFrames, maxFrames }) => {
+    const { recordTerminalSession } = await import("./terminal_record.js");
+    const { readVideoFrames, cleanupFrameDir } = await import("./video.js");
+    const result = await recordTerminalSession(command, {
+      output, fontSize, sampleMs, idleCapMs, rows, cols, temporary: !keep,
+    });
+
+    const content = [
+      {
+        type: "text",
+        text: [
+          `Terminal recording saved: ${result.path}`,
+          `command=${JSON.stringify(result.command)} frames=${result.frames} duration=${(result.durationMs / 1000).toFixed(1)}s`,
+          returnFrames ? `Returning up to ${maxFrames} frames so you can review the session.` : "Frames not returned; use read_video to inspect.",
+        ].join("\n"),
+      },
+      {
+        type: "resource",
+        resource: { uri: `file://${result.path}`, mimeType: "image/gif", name: basename(result.path) },
+      },
+    ];
+
+    if (returnFrames) {
+      const viewed = await readVideoFrames(result.path, { maxFrames });
+      for (let i = 0; i < viewed.frames.length; i++) {
+        const fr = viewed.frames[i];
+        content.push({ type: "text", text: `Frame ${i + 1}/${viewed.frames.length}` });
+        content.push({ type: "image", data: fr.base64, mimeType: fr.mimeType });
       }
       await cleanupFrameDir(viewed.outputDir);
     }

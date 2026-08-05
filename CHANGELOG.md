@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-08-05
+
+### Added
+- **Terminal-session recording** — new `record_terminal` MCP tool + `record-terminal <command>` CLI.
+  Runs a command, samples its terminal output over time, and renders a GIF of the session. Unlike
+  `record_video` (which screen-captures the whole desktop), this records **only the terminal** — no
+  desktop, no private windows — and works **headless** (WSL, SSH, CI). Long unchanged stretches
+  (e.g. a model load) are idle-capped so the GIF stays short. Reuses `terminal_render.py` for
+  frame rendering. (`src/terminal_record.js`)
+
 ## [1.2.1] - 2026-07-29
 
 ### Fixed

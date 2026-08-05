@@ -10,6 +10,7 @@ This is the rudycanshoot project — an MCP server that lets AI assistants take 
 | `read_screenshot` | Read a saved screenshot as base64 for viewing |
 | `list_screenshots` | List recent captures with timestamps and paths |
 | `record_video` | Record a temporary screen video; returns frames for AI viewing |
+| `record_terminal` | Record a TERMINAL SESSION (a running command) as a GIF — no desktop, works headless |
 | `read_video` | Extract frames from a video so the AI can watch it |
 
 ## Development Commands
