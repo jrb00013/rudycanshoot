@@ -25,6 +25,7 @@ node bin/rudycanshoot.js install --all  # configure all AI tools
 ## Key Files
 
 - `src/screenshot.js` — platform-specific capture logic (Linux/macOS/Windows)
+- `src/webcam.js` — one-frame webcam capture (v4l2 / dshow, incl. WSL2 via Windows ffmpeg.exe)
 - `src/server.js` — MCP server with tool definitions
 - `src/install.js` — auto-installer for AI tools
 - `bin/rudycanshoot.js` — CLI entry point

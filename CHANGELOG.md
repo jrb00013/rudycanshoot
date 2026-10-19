@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Added
+- **Webcam capture** — new `webcam [name]` CLI grabs one JPEG frame from a camera via ffmpeg:
+  `v4l2` on Linux, `dshow` on Windows and on WSL2 (through the Windows-side `ffmpeg.exe`).
+  Device, ffmpeg path, size and backend are configurable by flag or `RUDYCANSHOOT_CAM_*` /
+  `RUDYCANSHOOT_FFMPEG` env vars; the device auto-detects to the first video device, and
+  `--list` prints what is available. (`src/webcam.js`)
+
 ## [1.3.0] - 2026-08-05
 
 ### Added

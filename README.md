@@ -84,6 +84,10 @@ rudycanshoot record --duration 5 --fps 4
 rudycanshoot videos
 rudycanshoot cleanup-videos
 
+# Grab one webcam frame (JPEG)
+rudycanshoot webcam --list
+rudycanshoot webcam desk            # → ~/.rudycanshoot/captures/desk.jpg
+
 # Start MCP server (used by AI tools — usually run automatically)
 rudycanshoot serve
 
@@ -138,6 +142,34 @@ Same rule: **silent only** (no portal ScreenCast prompts).
 | screenshot frames → MP4/GIF | fallback using the silent screenshot chain |
 
 macOS/Windows video uses ffmpeg `avfoundation` / `gdigrab`.
+
+### Webcam
+
+`rudycanshoot webcam [name]` captures a single JPEG frame from a camera with ffmpeg and prints its path.
+
+| Platform | Backend | Device |
+|----------|---------|--------|
+| Linux | `v4l2` | `/dev/videoN` |
+| Windows | `dshow` | DirectShow device name |
+| WSL2 (no `/dev/video*`) | `dshow` via Windows `ffmpeg.exe` | DirectShow device name |
+
+```bash
+rudycanshoot webcam --list                          # print available video devices
+rudycanshoot webcam                                 # first detected camera, camera's default size
+rudycanshoot webcam desk --size 1920x1080 --dir ./frames   # → ./frames/desk.jpg
+rudycanshoot webcam --device "My USB Camera" -o /tmp/cam.jpg
+rudycanshoot webcam --device /dev/video2            # Linux
+```
+
+| Option | Env var | Default |
+|--------|---------|---------|
+| `--device <name>` | `RUDYCANSHOOT_CAM_DEVICE` | first video device ffmpeg lists |
+| `--ffmpeg <path>` | `RUDYCANSHOOT_FFMPEG` | dshow: `ffmpeg.exe` on PATH, then winget / scoop / chocolatey / `C:\ffmpeg\bin`; v4l2: same lookup as video |
+| `-s, --size <WxH>` | `RUDYCANSHOOT_CAM_SIZE` | camera default |
+| `-b, --backend <dshow\|v4l2>` | `RUDYCANSHOOT_CAM_BACKEND` | by platform |
+| `-d, --dir <dir>` / `-o, --output <path>` | — | `~/.rudycanshoot/captures/`, `webcam-<timestamp>.jpg` |
+
+On WSL2, install ffmpeg on the Windows side (`winget install Gyan.FFmpeg`). The output path is translated with `wslpath`, so Linux paths work.
 
 ### macOS
 

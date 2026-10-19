@@ -43,6 +43,42 @@ program
   });
 
 program
+  .command("webcam [name]")
+  .description("Capture one JPEG frame from a webcam (v4l2 on Linux, dshow on Windows/WSL2)")
+  .option("--device <name>", "Camera: dshow device name or /dev/videoN (env RUDYCANSHOOT_CAM_DEVICE; default: first detected)")
+  .option("--ffmpeg <path>", "ffmpeg binary (env RUDYCANSHOOT_FFMPEG; default: PATH, then common install locations)")
+  .option("-s, --size <WxH>", "Resolution, e.g. 1920x1080 (env RUDYCANSHOOT_CAM_SIZE; default: camera default)")
+  .option("-b, --backend <backend>", "dshow | v4l2 (env RUDYCANSHOOT_CAM_BACKEND; default: by platform)")
+  .option("-o, --output <path>", "Output file path")
+  .option("-d, --dir <dir>", "Output directory (default ~/.rudycanshoot/captures)")
+  .option("--list", "List available video devices and exit")
+  .action(async (name, opts) => {
+    const { captureWebcam, listWebcams } = await import("../src/webcam.js");
+    try {
+      if (opts.list) {
+        const { backend, ffmpeg, devices } = await listWebcams({ backend: opts.backend, ffmpeg: opts.ffmpeg });
+        console.error(`backend=${backend}${ffmpeg ? ` ffmpeg=${ffmpeg}` : ""}`);
+        if (!devices.length) console.error("No video devices found.");
+        devices.forEach((d) => console.log(d.label ? `${d.name}\t${d.label}` : d.name));
+        return;
+      }
+      const result = await captureWebcam({
+        device: opts.device,
+        ffmpeg: opts.ffmpeg,
+        size: opts.size,
+        backend: opts.backend,
+        filename: opts.output ? basename(opts.output) : name,
+        outputDir: opts.dir || (opts.output ? dirname(opts.output) : undefined),
+      });
+      console.log(result.path);
+      console.error(`backend=${result.backend} device="${result.device}"`);
+    } catch (err) {
+      console.error(`rudycanshoot webcam: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+program
   .command("install")
   .description("Auto-configure AI tools to use this MCP server")
   .option("--all", "Install for all supported tools")
