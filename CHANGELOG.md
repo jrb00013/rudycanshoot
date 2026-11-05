@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Fixed
+- Linux/X11: `--mode window` (and MCP `mode: "window"`) silently captured the whole screen when xdotool was missing or the ffmpeg/xwd fallback was used. The active window's rectangle now comes from `xprop` + `xwininfo` (x11-utils) and goes through the area path, so every backend crops to the window.
+- `import` fallback ignored `--area`; it now crops. The `xwd -root` fallback (no area support) is skipped when an area is set, so ffmpeg x11grab handles it.
+
+### Added
+- `capture --title <text>` / MCP `window_title`: capture the window whose title contains the text (X11).
+- `capture --raise` / MCP `raise`: bring the window to the front first (EWMH `_NET_ACTIVE_WINDOW` via libX11 ctypes, no xdotool/wmctrl). A covered window otherwise shows whatever covers it.
+
 ## [1.3.1] - 2026-08-06
 
 ### Changed

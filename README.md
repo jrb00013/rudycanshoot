@@ -73,6 +73,7 @@ Ask your AI: *"Take a screenshot and show me what's on screen."*
 # Take a screenshot
 rudycanshoot capture
 rudycanshoot capture --mode window
+rudycanshoot capture --title "Image Cleanup" --raise   # a window by title, brought to the front (X11)
 rudycanshoot capture --mode area --area 0,0,1920,1080
 rudycanshoot capture --output /tmp/snap.png
 
