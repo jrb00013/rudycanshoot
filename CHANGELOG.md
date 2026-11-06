@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Added
+- **Webcam capture** — new `webcam [name]` CLI grabs one JPEG frame from a camera via ffmpeg:
+  `v4l2` on Linux, `dshow` on Windows and on WSL2 (through the Windows-side `ffmpeg.exe`).
+  Device, ffmpeg path, size and backend are configurable by flag or `RUDYCANSHOOT_CAM_*` /
+  `RUDYCANSHOOT_FFMPEG` env vars; the device auto-detects to the first video device, and
+  `--list` prints what is available. (`src/webcam.js`)
 ### Fixed
 - Linux/X11: `--mode window` (and MCP `mode: "window"`) silently captured the whole screen when xdotool was missing or the ffmpeg/xwd fallback was used. The active window's rectangle now comes from `xprop` + `xwininfo` (x11-utils) and goes through the area path, so every backend crops to the window.
 - `import` fallback ignored `--area`; it now crops. The `xwd -root` fallback (no area support) is skipped when an area is set, so ffmpeg x11grab handles it.
