@@ -1,3 +1,4 @@
+import { resolveWindowArea } from "./x11_window.js";
 import { execFile, execFileSync } from "node:child_process";
 import { promisify } from "node:util";
 import { existsSync, mkdirSync } from "node:fs";
@@ -111,7 +112,20 @@ $bmp.Dispose()
 }
 
 async function captureLinux(outputPath, opts = {}) {
-  const { window: windowMode = false, area = null } = opts;
+  let { window: windowMode = false, area = null } = opts;
+  const { windowTitle = null, raise = false } = opts;
+
+  // X11: turn "window" / a window title into a screen rectangle with xprop +
+  // xwininfo (x11-utils), so window capture works with every backend below,
+  // including the ffmpeg x11grab fallback, and without xdotool.
+  if ((windowMode || windowTitle) && !area && process.env.DISPLAY?.trim() && !process.env.WAYLAND_DISPLAY?.trim()) {
+    try {
+      area = await resolveWindowArea({ title: windowTitle, raise });
+      windowMode = false;
+    } catch (err) {
+      if (windowTitle) throw err;
+    }
+  }
 
   // Prefer silent tools only — never xdg-desktop-portal / interactive pickers
   // (those pop permission dialogs, which break headless MCP use).
@@ -155,13 +169,18 @@ async function captureLinux(outputPath, opts = {}) {
   }
 
   if (which("import")) {
-    await execFileAsync("import", ["-window", "root", outputPath]);
+    const args = ["-window", "root"];
+    if (area) {
+      const [x, y, w, h] = area.split(",").map(Number);
+      args.push("-crop", `${w}x${h}+${x}+${y}`);
+    }
+    await execFileAsync("import", [...args, outputPath]);
     return;
   }
 
   // X11 built-ins: xwd (x11-apps) + ffmpeg convert — no ImageMagick required.
   // Same idea as macOS screencapture / Windows PowerShell: use what's already there.
-  if (process.env.DISPLAY?.trim() && which("xwd")) {
+  if (process.env.DISPLAY?.trim() && which("xwd") && !area) {
     const xwdPath = outputPath.replace(/\.png$/i, ".xwd");
     await execFileAsync("xwd", ["-root", "-silent", "-out", xwdPath]);
     if (await convertXwdToPng(xwdPath, outputPath)) {
@@ -296,6 +315,8 @@ export async function takeScreenshot(opts = {}) {
     outputDir = defaultOutputDir(),
     filename = timestampedName(),
     window: windowMode = false,
+    windowTitle = null,
+    raise = false,
     area = null,
   } = opts;
 
@@ -309,7 +330,7 @@ export async function takeScreenshot(opts = {}) {
   } else if (os === "win32") {
     await captureWindows(outputPath);
   } else {
-    const actual = await captureLinux(outputPath, { window: windowMode, area });
+    const actual = await captureLinux(outputPath, { window: windowMode, windowTitle, raise, area });
     return actual || outputPath;
   }
 

@@ -32,6 +32,14 @@ server.tool(
       .string()
       .optional()
       .describe("Region as 'x,y,width,height' — only used when mode=area"),
+    window_title: z
+      .string()
+      .optional()
+      .describe("Capture the window whose title contains this text (X11). Implies mode=window."),
+    raise: z
+      .boolean()
+      .default(false)
+      .describe("Bring the window to the front before capturing (X11). A covered window otherwise shows whatever covers it."),
     filename: z
       .string()
       .optional()
@@ -41,9 +49,11 @@ server.tool(
       .optional()
       .describe("Directory to save into (default: ~/.rudycanshoot/captures/)"),
   },
-  async ({ mode, area, filename, outputDir }) => {
+  async ({ mode, area, window_title, raise, filename, outputDir }) => {
     const path = await takeScreenshot({
-      window: mode === "window",
+      window: mode === "window" || Boolean(window_title),
+      windowTitle: window_title,
+      raise,
       area: mode === "area" ? area : undefined,
       filename,
       outputDir,

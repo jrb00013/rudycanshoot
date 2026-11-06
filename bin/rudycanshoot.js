@@ -29,12 +29,16 @@ program
   .description("Take a screenshot from the command line")
   .option("-m, --mode <mode>", "fullscreen | window | area", "fullscreen")
   .option("-a, --area <x,y,w,h>", "Region to capture (requires --mode area)")
+  .option("-t, --title <text>", "Capture the window whose title contains <text> (X11; implies --mode window)")
+  .option("--raise", "Bring the window to the front before capturing (X11; changes focus)")
   .option("-o, --output <path>", "Output file path")
   .option("-d, --dir <dir>", "Output directory")
   .action(async (opts) => {
     const { takeScreenshot } = await import("../src/screenshot.js");
     const path = await takeScreenshot({
-      window: opts.mode === "window",
+      window: opts.mode === "window" || Boolean(opts.title),
+      windowTitle: opts.title,
+      raise: Boolean(opts.raise),
       area: opts.mode === "area" ? opts.area : undefined,
       filename: opts.output ? require("path").basename(opts.output) : undefined,
       outputDir: opts.dir || (opts.output ? require("path").dirname(opts.output) : undefined),
