@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+### Fixed
+- **Screenshots on WSLg/Weston captured the wrong desktop entirely.** Root-window capture
+  (scrot, xwd, ffmpeg x11grab) returns solid black under Xwayland — the X11 root framebuffer
+  is a stub there; real pixels only exist per-window via `XComposite`. With none of those
+  tools installed, every capture silently fell through to the WSL-PowerShell fallback and
+  grabbed the *Windows host desktop* instead of the actual Linux GUI app, with no indication
+  anything had gone wrong. New `src/xcomposite.js` + `src/native/xcomposite_capture.py`
+  redirect one window's real rendering via the `Composite` X extension (the same mechanism
+  `import -window`/`maim -i` use) and read it back — no desktop-permission dialogs, no extra
+  system packages, just a lazily-created venv (`python-xlib` + `Pillow`) cached under
+  `~/.rudycanshoot/venv`. `window` mode now captures the correct window; `fullscreen` mode
+  degrades to the same window with a clear stderr note, rather than silently substituting the
+  wrong surface. Window targeting falls back from `_NET_ACTIVE_WINDOW` (Weston under WSLg
+  doesn't set it — confirmed, not assumed) to the largest *named* visible top-level window,
+  filtering out WSLg's own unnamed internal surfaces (observed: an unnamed window at the full
+  virtual-screen size) which would otherwise win "largest" outright and aren't even valid
+  `XComposite` redirect targets. (`src/xcomposite.js`, `src/screenshot.js`)
+
 ### Added
 - **Webcam capture** — new `webcam [name]` CLI grabs one JPEG frame from a camera via ffmpeg:
   `v4l2` on Linux, `dshow` on Windows and on WSL2 (through the Windows-side `ffmpeg.exe`).

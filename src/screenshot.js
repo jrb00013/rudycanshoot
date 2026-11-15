@@ -5,6 +5,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { homedir, platform } from "node:os";
 import { ensureDisplayEnv } from "./display.js";
+import { captureViaXComposite, looksLikeBrokenRootCapture } from "./xcomposite.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -197,6 +198,28 @@ async function captureLinux(outputPath, opts = {}) {
   // Silent single-frame grab via ffmpeg x11grab (already used for video recording).
   if (process.env.DISPLAY?.trim() && (await captureViaFfmpegX11(outputPath, { area }))) {
     return;
+  }
+
+  // Xwayland root-window capture is broken on WSLg/Weston (returns solid
+  // black -- the X11 root framebuffer is a stub there; real pixels only
+  // exist per-window via XComposite). Every backend above just grabbed
+  // the root window and either returned black or failed outright, so
+  // before falling through to the Windows-host-desktop fallback (wrong
+  // surface entirely in that case), try capturing the actual target
+  // window's real content. Window mode: the active window. Fullscreen on
+  // a known-broken root: best-effort substitute for "the screen" with the
+  // active window, which is the common case under WSLg (one foreground
+  // app) -- logged, not silent, since it's not a true full-screen grab.
+  if (!area && looksLikeBrokenRootCapture()) {
+    if (await captureViaXComposite(outputPath, {})) {
+      if (!windowMode) {
+        console.error(
+          "rudycanshoot: root-window capture unavailable under Xwayland; " +
+            "captured the active window instead of the full virtual screen."
+        );
+      }
+      return;
+    }
   }
 
   // WSL fallback: capture the Windows host desktop.
